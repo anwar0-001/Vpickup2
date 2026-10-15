@@ -1,6 +1,5 @@
 extends CharacterBody3D
-## Simple arcade pickup controller using original primitive geometry.
-## Keyboard controls: W/S or arrows accelerate/brake, A/D steer.
+## Arcade pickup controller. Keyboard and virtual touch controls are supported.
 
 const ACCELERATION := 18.0
 const MAX_SPEED := 25.0
@@ -65,11 +64,9 @@ func _physics_process(delta: float) -> void:
 		speed = move_toward(speed, -REVERSE_SPEED, ACCELERATION * delta)
 	else:
 		speed = move_toward(speed, 0.0, FRICTION * delta)
-
 	var steer := Input.get_action_strength("steer_right") - Input.get_action_strength("steer_left")
 	if abs(speed) > 0.5:
 		rotation.y -= steer * TURN_RATE * delta * sign(speed)
-
 	var forward := -global_transform.basis.z
 	velocity.x = forward.x * speed
 	velocity.z = forward.z * speed
