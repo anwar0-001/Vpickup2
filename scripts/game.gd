@@ -135,7 +135,8 @@ func _create_shops() -> void:
 	for i in range(6):
 		var x := 53.0 + float(i % 3) * 13.0
 		var z := -17.0 - float(int(i / 3)) * 18.0
-		var color := [Color(0.84,0.73,0.58), Color(0.71,0.77,0.83), Color(0.81,0.66,0.58)][i % 3]
+		var house_colors: Array[Color] = [Color(0.84,0.73,0.58), Color(0.71,0.77,0.83), Color(0.81,0.66,0.58)]
+		var color: Color = house_colors[i % 3]
 		_building("ForSaleHouse_%d" % (i + 1), Vector3(7, 4.5, 7), Vector3(x, 1.55, z), color, Color(0.25,0.19,0.16))
 		_label_3d("HOUSE %d\n$%d" % [i + 1, HOUSE_PRICE], Vector3(x, 4.8, z), Color(1,0.94,0.65))
 
