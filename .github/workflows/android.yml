@@ -12,6 +12,10 @@ on:
       - "export_presets.cfg"
       - ".github/workflows/android.yml"
 
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   android-apk:
     runs-on: ubuntu-latest
