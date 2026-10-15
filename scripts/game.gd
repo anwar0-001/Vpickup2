@@ -12,6 +12,8 @@ var infinite_money := true
 var owned_houses: Array[bool] = [false, false, false, false, false, false]
 var current_nearby_action := ""
 var vehicle: CharacterBody3D
+var saved_vehicle_position := Vector3(-24, 0.8, 4)
+var saved_vehicle_rotation := Vector3.ZERO
 var status_label: Label
 var money_label: Label
 var action_button: Button
@@ -148,7 +150,8 @@ func _building(building_name: String, size: Vector3, pos: Vector3, wall_color: C
 func _create_player() -> void:
 	vehicle = VehicleScript.new()
 	vehicle.name = "PlayerPickup"
-	vehicle.position = Vector3(-24, 0.8, 4)
+	vehicle.position = saved_vehicle_position
+	vehicle.rotation = saved_vehicle_rotation
 	add_child(vehicle)
 	_attach_camera(vehicle)
 
@@ -345,6 +348,12 @@ func _load_game() -> void:
 		return
 	money = int(save.get_value("player", "money", money))
 	infinite_money = bool(save.get_value("player", "infinite_money", infinite_money))
+	var saved_position = save.get_value("player", "vehicle_position", saved_vehicle_position)
+	var saved_rotation = save.get_value("player", "vehicle_rotation", saved_vehicle_rotation)
+	if saved_position is Vector3:
+		saved_vehicle_position = saved_position
+	if saved_rotation is Vector3:
+		saved_vehicle_rotation = saved_rotation
 	var saved_houses = save.get_value("player", "owned_houses", owned_houses)
 	if saved_houses is Array and saved_houses.size() == 6:
 		owned_houses.assign(saved_houses)
