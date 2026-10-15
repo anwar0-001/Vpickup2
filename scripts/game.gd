@@ -192,6 +192,8 @@ func _create_ui() -> void:
 	layer.add_child(help)
 
 func _process(_delta: float) -> void:
+	if Input.is_action_just_pressed("interact"):
+		_interact()
 	if not is_instance_valid(vehicle):
 		return
 	var p := vehicle.global_position
