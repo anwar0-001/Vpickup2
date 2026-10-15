@@ -1,0 +1,35 @@
+name: Build Vpickup2 Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "**.gd"
+      - "**.tscn"
+      - "**.tres"
+      - "project.godot"
+      - "export_presets.cfg"
+      - ".github/workflows/android.yml"
+
+jobs:
+  android-apk:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3.0
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Import project resources
+        run: godot --headless --editor --path . --quit
+      - name: Export debug APK
+        run: |
+          mkdir -p build
+          godot --headless --path . --export-debug "Android" build/Vpickup2.apk
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vpickup2-Android-APK
+          path: build/Vpickup2.apk
+          if-no-files-found: error
+          retention-days: 14
