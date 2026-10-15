@@ -1,36 +1,33 @@
 # Vpickup2
 
-Vpickup2 is a **new, independent Android driving/life-simulation game prototype**. It is not a modified copy of PickUp Beta and does not include its proprietary game files or assets.
+Vpickup2 is an independent 3D driving and life-simulation game for Android, made with Godot 4 and original procedural geometry. It is inspired by the broad genre, not copied from PickUp Beta, and does not include that game's code or assets.
 
-## Current prototype features
-- Procedurally built village and city zones joined by roads.
-- A simple player-controlled pickup built from original primitive geometry.
-- A basic city car dealership and food market.
-- Six individually purchasable houses.
-- A work button that awards money.
-- A single-player infinite-money toggle.
-- Keyboard driving controls for desktop testing.
+## Included in the current source
+- A green open-world test map with a village, a small city, and connecting roads.
+- A player-driven pickup with arcade acceleration, braking, reverse and steering.
+- Touch buttons for left/right steering, acceleration and braking, plus an interact button.
+- A car dealership, food shop and six houses for sale.
+- A work button that pays $150, food purchase interaction, house purchasing, and an infinite-money toggle.
+- Local save file for money, infinite-money setting and house ownership.
+- Android export preset and GitHub Actions workflow intended to build a debug APK.
 
-## Engine
-- Godot 4.x
-- GDScript
-- 3D primitive meshes, generated at runtime
+## Controls
+- Android: use the on-screen left/right, accelerate and brake buttons. Drive near the dealership, food market or one of the six sale houses, then tap Interact.
+- Desktop: WASD or arrow keys to drive; E to interact.
+- Tap Work +$150 to earn money.
+- Toggle Infinite to switch between normal spending and unlimited money.
 
-## Run
-1. Install Godot 4.3 or a compatible Godot 4.x release.
-2. Import this folder as a project.
-3. Open `project.godot` and press Play.
-4. Drive using **WASD** or arrow keys. Press **E** or the on-screen Interact button near shops/houses.
+## Build locally
+1. Install Godot 4.3 and its Android export templates.
+2. Configure the Android SDK and Java SDK in Godot Editor settings.
+3. Open/import this repository project.godot.
+4. Choose Project > Export > Android and export a debug APK.
 
-## Android build
-Android export requires Godot's Android export templates and Android SDK/JDK configured in the editor. This repository currently contains the source prototype, not a prebuilt APK.
+## Build on GitHub
+The workflow at .github/workflows/android.yml runs on pushes to main that change game files and can also be started manually from Actions > Build Vpickup2 Android APK > Run workflow. If the workflow succeeds, download the Vpickup2-Android-APK artifact from that run.
 
-## Planned next milestones
-1. Add touch steering/throttle controls for Android.
-2. Improve driving physics, collisions, camera follow and vehicle purchase/selection.
-3. Add usable house interiors, ownership persistence and more jobs.
-4. Replace prototype primitive geometry with original or properly licensed 3D assets.
-5. Test performance and build a signed Android APK.
+## Important status
+The repository is source code, not a guarantee that a build has passed. The first successful GitHub Actions run is required to verify the export environment and catch engine/parser issues. The game is still an early prototype: its world uses primitive shapes, the vehicle physics and collisions are basic, and interiors, pedestrians, traffic, missions, audio, polished models and release signing remain future development work. Do not distribute a release build until it has been tested on real devices.
 
-## Assets and intellectual property
-All current visual elements are generated from simple geometric primitives. The game is inspired by the broad genre of pickup driving and open-world life simulation, not a reproduction of another game's source code or proprietary assets.
+## Intellectual property
+All current scene geometry is generated from simple built-in Godot meshes. Use only original or properly licensed assets when expanding the game.
