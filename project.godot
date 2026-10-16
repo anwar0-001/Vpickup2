@@ -3,10 +3,10 @@
 config_version=5
 
 [application]
-config/name="Vpickup2"
+config/name="Vpickup2 - الإصدار الثاني"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
-config/description="Open-world pickup driving and life simulation"
+config/description="Vpickup2 الإصدار الثاني - Open-world pickup driving and life simulation"
 
 [display]
 window/size/viewport_width=1280
