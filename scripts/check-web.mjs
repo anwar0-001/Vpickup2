@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 const html=readFileSync('web-pickups/index.html','utf8');
 const css=readFileSync('web-pickups/style.css','utf8');
 const js=readFileSync('web-pickups/game.js','utf8');
-assert.match(html,/<script type="module" src="game\\.js"><\\/script>/,'HTML must load the game module');
-assert.match(html,/<div id="game"><\\/div>/,'HTML must provide the rendering root');
-assert.match(css,/#touchControls\\s*\\{/,'Touch controls must have styles');
-for(const name of ['missionUpdate','updateCamera','hud','loop']) assert.equal((js.match(new RegExp('function '+name+'\\\\s*\\\\(','g'))||[]).length,1,name+' must be defined exactly once');
-assert.match(js,/تعذر تشغيل الرسوم ثلاثية الأبعاد/,'WebGL failure must be visible');
+assert.ok(html.includes('<script type="module" src="game.js"></script>'),'HTML must load the game module');
+assert.ok(html.includes('<div id="game"></div>'),'HTML must provide the rendering root');
+assert.ok(css.includes('#touchControls{'),'Touch controls must have styles');
+for(const name of ['missionUpdate','updateCamera','hud','loop']) {
+  assert.equal(js.split('function '+name+'(').length-1,1,name+' must be defined exactly once');
+}
+assert.ok(js.includes('تعذر تشغيل الرسوم ثلاثية الأبعاد'),'WebGL failure must be visible');
 console.log('Web game structure checks passed');
