@@ -16,6 +16,7 @@ var saved_vehicle_position := Vector3(-24, 0.8, 4)
 var saved_vehicle_rotation := Vector3.ZERO
 var status_label: Label
 var money_label: Label
+var speed_label: Label
 var action_button: Button
 var infinite_button: Button
 var world_environment: WorldEnvironment
@@ -193,6 +194,18 @@ func _create_ui() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "GameUI"
 	add_child(layer)
+	speed_label = Label.new()
+	speed_label.name = "Speedometer"
+	speed_label.text = "0 km/h  |  N"
+	speed_label.add_theme_font_size_override("font_size", 30)
+	speed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	speed_label.anchor_left = 1.0
+	speed_label.anchor_right = 1.0
+	speed_label.offset_left = -300
+	speed_label.offset_right = -20
+	speed_label.offset_top = 20
+	speed_label.offset_bottom = 62
+	layer.add_child(speed_label)
 	var panel := PanelContainer.new()
 	panel.position = Vector2(18, 18)
 	panel.custom_minimum_size = Vector2(300, 100)
@@ -273,6 +286,10 @@ func _process(_delta: float) -> void:
 		_interact()
 	if not is_instance_valid(vehicle):
 		return
+	if is_instance_valid(speed_label):
+		var vehicle_speed: float = absf(vehicle.speed) if "speed" in vehicle else 0.0
+		var gear := "R" if vehicle.speed < -0.5 else ("D" if vehicle.speed > 0.5 else "N")
+		speed_label.text = "%d km/h  |  %s" % [roundi(vehicle_speed * 3.6), gear]
 	var p := vehicle.global_position
 	var dealer_distance := Vector2(p.x - 42, p.z + 48).length()
 	var food_distance := Vector2(p.x - 7, p.z + 48).length()
