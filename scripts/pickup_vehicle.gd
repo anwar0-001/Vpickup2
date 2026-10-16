@@ -1,60 +1,109 @@
 extends CharacterBody3D
-## Arcade pickup controller. Keyboard and virtual touch controls are supported.
+## Original procedural pickup model with mobile-friendly geometry and arcade driving.
 
-const ACCELERATION := 18.0
-const MAX_SPEED := 25.0
-const REVERSE_SPEED := 9.0
-const FRICTION := 10.0
-const TURN_RATE := 1.65
+const ACCELERATION := 17.0
+const MAX_SPEED := 29.0
+const REVERSE_SPEED := 10.0
+const FRICTION := 9.0
+const TURN_RATE := 1.55
 var speed := 0.0
 
 func _ready() -> void:
 	floor_snap_length = 0.4
 	_build_vehicle()
 
-func _build_vehicle() -> void:
-	var body_mat := _mat(Color(0.78, 0.16, 0.10))
-	var dark_mat := _mat(Color(0.12, 0.13, 0.14))
-	var glass_mat := _mat(Color(0.20, 0.42, 0.53))
-	_add_box("TruckBody", Vector3(2.1, 0.65, 3.8), Vector3(0, 0.65, 0), body_mat)
-	_add_box("Cabin", Vector3(1.7, 0.8, 1.45), Vector3(0, 1.28, -0.45), body_mat)
-	_add_box("Windshield", Vector3(1.48, 0.48, 0.08), Vector3(0, 1.35, 0.30), glass_mat)
-	_add_box("PickupBed", Vector3(1.55, 0.18, 1.25), Vector3(0, 1.02, -1.28), dark_mat)
-	for x in [-0.98, 0.98]:
-		for z in [-1.25, 1.25]:
-			var wheel := MeshInstance3D.new()
-			wheel.name = "Wheel"
-			var mesh := CylinderMesh.new()
-			mesh.top_radius = 0.42
-			mesh.bottom_radius = 0.42
-			mesh.height = 0.25
-			wheel.mesh = mesh
-			wheel.rotation_degrees.z = 90
-			wheel.position = Vector3(x, 0.42, z)
-			wheel.material_override = dark_mat
-			add_child(wheel)
-	var collision := CollisionShape3D.new()
-	var shape := BoxShape3D.new()
-	shape.size = Vector3(2.0, 1.5, 3.6)
-	collision.shape = shape
-	collision.position = Vector3(0, 0.75, 0)
-	add_child(collision)
-
-func _mat(color: Color) -> StandardMaterial3D:
+func _mat(color: Color, roughness := 0.68, metallic := 0.0) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
-	material.roughness = 0.75
+	material.roughness = roughness
+	material.metallic = metallic
 	return material
 
-func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material) -> void:
+func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material, bevel := false) -> MeshInstance3D:
 	var node := MeshInstance3D.new()
 	node.name = node_name
 	var mesh := BoxMesh.new()
 	mesh.size = size
+	if bevel:
+		mesh.subdivide_width = 2
+		mesh.subdivide_depth = 2
 	node.mesh = mesh
 	node.position = pos
 	node.material_override = material
 	add_child(node)
+	return node
+
+func _add_cylinder(node_name: String, radius: float, height: float, pos: Vector3, material: Material, rotate_z := 0.0) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	node.name = node_name
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = radius
+	mesh.bottom_radius = radius
+	mesh.height = height
+	mesh.radial_segments = 16
+	node.mesh = mesh
+	node.position = pos
+	node.rotation_degrees.z = rotate_z
+	node.material_override = material
+	add_child(node)
+	return node
+
+func _build_vehicle() -> void:
+	var paint := _mat(Color(0.72, 0.075, 0.045), 0.28, 0.35)
+	var paint_dark := _mat(Color(0.34, 0.035, 0.025), 0.34, 0.25)
+	var rubber := _mat(Color(0.035, 0.04, 0.045), 0.92)
+	var rim := _mat(Color(0.62, 0.67, 0.70), 0.25, 0.82)
+	var glass := _mat(Color(0.10, 0.25, 0.31), 0.18, 0.2)
+	var chrome := _mat(Color(0.72, 0.75, 0.76), 0.22, 0.9)
+	var lamp := _mat(Color(1.0, 0.88, 0.57), 0.2, 0.1)
+	var red_lamp := _mat(Color(0.85, 0.025, 0.018), 0.25, 0.0)
+	var black := _mat(Color(0.075, 0.085, 0.09), 0.55, 0.2)
+
+	# Main chassis, bonnet, cab, and open cargo bed.
+	_add_box("Chassis", Vector3(1.72, 0.24, 3.75), Vector3(0, 0.47, 0), black)
+	_add_box("LowerBody", Vector3(2.02, 0.52, 3.7), Vector3(0, 0.72, 0.02), paint, true)
+	_add_box("FrontBonnet", Vector3(1.82, 0.30, 1.03), Vector3(0, 1.00, -1.12), paint, true)
+	_add_box("Cabin", Vector3(1.66, 0.82, 1.48), Vector3(0, 1.27, -0.36), paint, true)
+	_add_box("Roof", Vector3(1.72, 0.14, 1.55), Vector3(0, 1.73, -0.34), paint_dark, true)
+	_add_box("FrontWindshield", Vector3(1.40, 0.48, 0.055), Vector3(0, 1.37, -1.105), glass)
+	_add_box("RearWindow", Vector3(1.30, 0.38, 0.055), Vector3(0, 1.37, 0.39), glass)
+	for side in [-1.0, 1.0]:
+		_add_box("SideWindow_%s" % str(side), Vector3(0.045, 0.43, 0.82), Vector3(side * 0.84, 1.39, -0.36), glass)
+		_add_box("DoorHandle_%s" % str(side), Vector3(0.035, 0.06, 0.20), Vector3(side * 1.025, 1.00, -0.32), chrome)
+		_add_box("SideMirrorArm_%s" % str(side), Vector3(0.20, 0.045, 0.06), Vector3(side * 0.97, 1.35, -0.93), black)
+		_add_box("SideMirror_%s" % str(side), Vector3(0.12, 0.19, 0.16), Vector3(side * 1.08, 1.39, -0.93), chrome)
+
+	# Cargo bed with raised sides and tailgate.
+	_add_box("BedFloor", Vector3(1.48, 0.12, 1.20), Vector3(0, 1.02, 1.18), black)
+	_add_box("BedLeftWall", Vector3(0.12, 0.35, 1.30), Vector3(-0.77, 1.20, 1.18), paint)
+	_add_box("BedRightWall", Vector3(0.12, 0.35, 1.30), Vector3(0.77, 1.20, 1.18), paint)
+	_add_box("BedFrontWall", Vector3(1.48, 0.34, 0.10), Vector3(0, 1.20, 0.54), paint)
+	_add_box("Tailgate", Vector3(1.50, 0.34, 0.10), Vector3(0, 1.20, 1.82), paint)
+	_add_box("FrontGrille", Vector3(0.74, 0.22, 0.055), Vector3(0, 0.82, -1.91), black)
+	_add_box("FrontBumper", Vector3(2.12, 0.16, 0.18), Vector3(0, 0.48, -1.93), chrome)
+	_add_box("RearBumper", Vector3(2.10, 0.15, 0.16), Vector3(0, 0.48, 1.94), chrome)
+	for x in [-0.69, 0.69]:
+		_add_box("Headlight_%s" % str(x), Vector3(0.34, 0.19, 0.07), Vector3(x, 0.94, -1.91), lamp)
+		_add_box("TailLight_%s" % str(x), Vector3(0.20, 0.27, 0.07), Vector3(x, 0.88, 1.91), red_lamp)
+
+	# Four detailed wheels with visible alloy hubs.
+	for x in [-1.02, 1.02]:
+		for z in [-1.22, 1.25]:
+			_add_cylinder("Tire_%s_%s" % [str(x), str(z)], 0.40, 0.28, Vector3(x, 0.43, z), rubber, 90.0)
+			_add_cylinder("AlloyHub_%s_%s" % [str(x), str(z)], 0.23, 0.295, Vector3(x * 1.005, 0.43, z), rim, 90.0)
+			_add_cylinder("HubCenter_%s_%s" % [str(x), str(z)], 0.075, 0.31, Vector3(x * 1.01, 0.43, z), black, 90.0)
+	# Wheel arches and side steps add depth to the silhouette.
+	for side in [-1.0, 1.0]:
+		_add_box("SideStep_%s" % str(side), Vector3(0.13, 0.10, 0.78), Vector3(side * 1.02, 0.47, -0.20), black)
+		_add_box("FrontFender_%s" % str(side), Vector3(0.12, 0.18, 0.84), Vector3(side * 1.02, 0.82, -1.22), paint_dark)
+		_add_box("RearFender_%s" % str(side), Vector3(0.12, 0.18, 0.84), Vector3(side * 1.02, 0.82, 1.25), paint_dark)
+
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(2.05, 1.55, 3.75)
+	collision.shape = shape
+	collision.position = Vector3(0, 0.78, 0)
+	add_child(collision)
 
 func _physics_process(delta: float) -> void:
 	var throttle := Input.get_action_strength("accelerate") - Input.get_action_strength("brake")
