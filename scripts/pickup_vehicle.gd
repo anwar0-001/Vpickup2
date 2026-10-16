@@ -80,6 +80,14 @@ func _build_vehicle() -> void:
 	_add_box("BedFrontWall", Vector3(1.48, 0.34, 0.10), Vector3(0, 1.20, 0.54), paint)
 	_add_box("Tailgate", Vector3(1.50, 0.34, 0.10), Vector3(0, 1.20, 1.82), paint)
 	_add_box("FrontGrille", Vector3(0.74, 0.22, 0.055), Vector3(0, 0.82, -1.91), black)
+	for grille_line in range(5):
+		_add_box("GrilleChrome_%d" % grille_line, Vector3(0.64, 0.018, 0.025), Vector3(0, 0.75 + float(grille_line) * 0.035, -1.95), chrome)
+	_add_box("Dashboard", Vector3(1.38, 0.12, 0.28), Vector3(0, 1.12, -0.82), black)
+	_add_box("DriverSeat", Vector3(0.54, 0.56, 0.48), Vector3(-0.43, 1.02, 0.05), black)
+	_add_box("PassengerSeat", Vector3(0.54, 0.56, 0.48), Vector3(0.43, 1.02, 0.05), black)
+	_add_cylinder("SteeringWheel", 0.22, 0.045, Vector3(-0.43, 1.30, -0.78), black, 90.0)
+	_add_box("FrontLicensePlate", Vector3(0.48, 0.12, 0.035), Vector3(0, 0.58, -2.035), chrome)
+	_add_box("RearLicensePlate", Vector3(0.48, 0.12, 0.035), Vector3(0, 0.58, 2.035), chrome)
 	_add_box("FrontBumper", Vector3(2.12, 0.16, 0.18), Vector3(0, 0.48, -1.93), chrome)
 	_add_box("RearBumper", Vector3(2.10, 0.15, 0.16), Vector3(0, 0.48, 1.94), chrome)
 	for x in [-0.69, 0.69]:
@@ -92,6 +100,10 @@ func _build_vehicle() -> void:
 			_add_cylinder("Tire_%s_%s" % [str(x), str(z)], 0.40, 0.28, Vector3(x, 0.43, z), rubber, 90.0)
 			_add_cylinder("AlloyHub_%s_%s" % [str(x), str(z)], 0.23, 0.295, Vector3(x * 1.005, 0.43, z), rim, 90.0)
 			_add_cylinder("HubCenter_%s_%s" % [str(x), str(z)], 0.075, 0.31, Vector3(x * 1.01, 0.43, z), black, 90.0)
+			for spoke in range(6):
+				var spoke_angle := float(spoke) * TAU / 6.0
+				var spoke := _add_box("WheelSpoke_%s_%s_%d" % [str(x), str(z), spoke], Vector3(0.045, 0.045, 0.035), Vector3(x * 1.01 + cos(spoke_angle) * 0.13, 0.43 + sin(spoke_angle) * 0.13, z), chrome)
+				spoke.rotation.z = spoke_angle
 	# Wheel arches and side steps add depth to the silhouette.
 	for side in [-1.0, 1.0]:
 		_add_box("SideStep_%s" % str(side), Vector3(0.13, 0.10, 0.78), Vector3(side * 1.02, 0.47, -0.20), black)
