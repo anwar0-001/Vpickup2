@@ -236,6 +236,16 @@ func _create_ui() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "GameUI"
 	add_child(layer)
+	var edition_label := Label.new()
+	edition_label.name = "EditionTitle"
+	edition_label.text = "VPICKUP2  |  الإصدار الثاني"
+	edition_label.add_theme_font_size_override("font_size", 24)
+	edition_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	edition_label.anchor_left = 0.30
+	edition_label.anchor_right = 0.70
+	edition_label.offset_top = 18
+	edition_label.offset_bottom = 52
+	layer.add_child(edition_label)
 	speed_label = Label.new()
 	speed_label.name = "Speedometer"
 	speed_label.text = "0 km/h  |  N"
