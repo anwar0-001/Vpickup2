@@ -338,7 +338,7 @@ func _save_game() -> void:
 	save.set_value("player", "money", money)
 	save.set_value("player", "infinite_money", infinite_money)
 	save.set_value("player", "owned_houses", owned_houses)
-	if is_instance_valid(vehicle):
+	if is_instance_valid(vehicle) and vehicle.is_inside_tree():
 		save.set_value("player", "vehicle_position", vehicle.global_position)
 		save.set_value("player", "vehicle_rotation", vehicle.global_rotation)
 	save.save(SAVE_PATH)
