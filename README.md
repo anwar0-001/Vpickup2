@@ -35,3 +35,10 @@ The repository is source code, not a guarantee that a build has passed. The firs
 
 ## Intellectual property
 All current scene geometry is generated from simple built-in Godot meshes. Use only original or properly licensed assets when expanding the game.
+
+
+## نسخة الويب
+
+توجد لعبة ثلاثية الأبعاد مستقلة في مجلد `web-pickups/` ويمكن نشر ذلك المجلد عبر GitHub Pages باستخدام سير العمل الموجود في `.github/workflows/web-pickups-pages.yml`. تدعم نسخة الويب التحكم بلوحة المفاتيح واللمس، ومهام نقاط التفتيش ومكافآت الرصيد داخل الجولة.
+
+شغّل خادم ملفات محليًا من `web-pickups/` (مثل `python -m http.server 8000`) ثم افتح الصفحة عبر `http://localhost:8000`. تحتاج اللعبة اتصالًا بالإنترنت لتحميل Three.js من CDN. التقدم والرصيد في نسخة المتصفح مؤقتان خلال الجولة ولا يُحفظان بعد إغلاق الصفحة.
