@@ -160,6 +160,27 @@ func _create_city() -> void:
 		var colors := [Color(0.61,0.64,0.68), Color(0.75,0.68,0.55), Color(0.49,0.57,0.63), Color(0.78,0.77,0.70)]
 		_building("CityBuilding_%d" % i, Vector3(8, height, 8), Vector3(x, height / 2.0, z), colors[i % colors.size()], Color(0.25,0.31,0.36))
 
+
+	# High-contrast pedestrian crossings at the city intersections.
+	for crossing_index in range(5):
+		var crossing_z := -78.0 + float(crossing_index) * 16.0
+		for stripe in range(5):
+			var stripe_x := 20.8 + float(stripe) * 1.6
+			_box(self, "Crosswalk_%d_%d" % [crossing_index, stripe], Vector3(0.95, 0.035, 0.34), Vector3(stripe_x, 0.105, crossing_z), Color(0.88, 0.89, 0.84), false)
+		# Small planted islands make the city streets feel less empty.
+		for side in [-1.0, 1.0]:
+			var planter_x := 16.5 if side < 0.0 else 31.5
+			_box(self, "StreetPlanter_%d_%s" % [crossing_index, str(side)], Vector3(1.2, 0.35, 2.0), Vector3(planter_x, 0.18, crossing_z), Color(0.38, 0.31, 0.23), false)
+			var shrub := MeshInstance3D.new()
+			shrub.name = "StreetShrub_%d_%s" % [crossing_index, str(side)]
+			var shrub_mesh := SphereMesh.new()
+			shrub_mesh.radius = 0.62
+			shrub_mesh.height = 0.9
+			shrub.mesh = shrub_mesh
+			shrub.position = Vector3(planter_x, 0.72, crossing_z)
+			shrub.material_override = _material(Color(0.12, 0.32, 0.16), 0.95)
+			add_child(shrub)
+
 func _create_shops() -> void:
 	_building("CarDealership", Vector3(13, 5, 10), Vector3(42, 2, -48), Color(0.20, 0.46, 0.68), Color(0.08, 0.15, 0.22))
 	_label_3d("CAR DEALER\nE: Buy vehicle", Vector3(42, 6, -48), Color(0.85, 0.96, 1))
