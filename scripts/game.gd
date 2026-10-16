@@ -287,8 +287,9 @@ func _process(_delta: float) -> void:
 	if not is_instance_valid(vehicle):
 		return
 	if is_instance_valid(speed_label):
-		var vehicle_speed: float = absf(vehicle.speed) if "speed" in vehicle else 0.0
-		var gear := "R" if vehicle.speed < -0.5 else ("D" if vehicle.speed > 0.5 else "N")
+		var current_speed := float(vehicle.get("speed"))
+		var vehicle_speed := absf(current_speed)
+		var gear := "R" if current_speed < -0.5 else ("D" if current_speed > 0.5 else "N")
 		speed_label.text = "%d km/h  |  %s" % [roundi(vehicle_speed * 3.6), gear]
 	var p := vehicle.global_position
 	var dealer_distance := Vector2(p.x - 42, p.z + 48).length()
