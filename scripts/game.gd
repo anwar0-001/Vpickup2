@@ -40,7 +40,9 @@ func _create_environment() -> void:
 	var sun := DirectionalLight3D.new()
 	sun.name = "Sun"
 	sun.rotation_degrees = Vector3(-48, -30, 0)
-	sun.light_energy = 1.15
+	sun.light_energy = 1.35
+	sun.shadow_enabled = true
+	sun.directional_shadow_max_distance = 120.0
 	add_child(sun)
 	world_environment = WorldEnvironment.new()
 	var env := Environment.new()
@@ -49,8 +51,13 @@ func _create_environment() -> void:
 	env.sky.sky_material = ProceduralSkyMaterial.new()
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.72, 0.79, 0.9)
-	env.ambient_light_energy = 0.7
+	env.ambient_light_energy = 0.85
+	env.reflected_light_source = Environment.REFLECTION_SOURCE_BG
+	env.tonemap_exposure = 1.05
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.ssil_enabled = true
+	env.ssil_radius = 3.0
+	env.ssil_intensity = 0.55
 	world_environment.environment = env
 	add_child(world_environment)
 
@@ -98,6 +105,14 @@ func _create_world() -> void:
 	_box(self, "VillageRoad", Vector3(7, 0.12, 105), Vector3(-24, -0.08, 22), Color(0.24, 0.24, 0.23), false)
 	_box(self, "CityRoad", Vector3(7, 0.14, 90), Vector3(24, -0.04, -55), Color(0.20, 0.21, 0.22), false)
 	_box(self, "ConnectingRoad", Vector3(55, 0.13, 7), Vector3(0, -0.05, -23), Color(0.20, 0.21, 0.22), false)
+	# Painted centre dashes and road edges.
+	for i in range(17):
+		_box(self, "VillageRoadDash_%d" % i, Vector3(0.12, 0.025, 2.1), Vector3(-24, 0.0, -27.0 + float(i) * 6.0), Color(0.92, 0.83, 0.55), false)
+		_box(self, "CityRoadDash_%d" % i, Vector3(0.12, 0.025, 2.1), Vector3(24, 0.04, -96.0 + float(i) * 5.0), Color(0.92, 0.83, 0.55), false)
+	for side in [-1.0, 1.0]:
+		_box(self, "VillageRoadEdge_%s" % str(side), Vector3(0.09, 0.025, 105), Vector3(-24 + side * 3.15, 0.005, 22), Color(0.78, 0.78, 0.70), false)
+		_box(self, "CityRoadEdge_%s" % str(side), Vector3(0.09, 0.025, 90), Vector3(24 + side * 3.15, 0.06, -55), Color(0.78, 0.78, 0.70), false)
+	_box(self, "ConnectingRoadDash", Vector3(40, 0.025, 0.12), Vector3(0, 0.02, -23), Color(0.92, 0.83, 0.55), false)
 	_label_3d("VILLAGE", Vector3(-40, 2, 62), Color(1, 0.94, 0.68))
 	_label_3d("CITY", Vector3(35, 2, -82), Color(0.72, 0.9, 1))
 	_create_village()
@@ -109,10 +124,19 @@ func _create_village() -> void:
 		var x := -47.0 + float(i % 4) * 11.0
 		var z := 18.0 + float(i / 4) * 15.0
 		_building("VillageHouse_%d" % i, Vector3(6, 4, 6), Vector3(x, 1.3, z), Color(0.69, 0.48, 0.31), Color(0.37, 0.19, 0.12))
-	for i in range(9):
-		var x := -70.0 + float(i) * 17.0
-		_box(self, "TreeTrunk_%d" % i, Vector3(0.7, 3, 0.7), Vector3(x, 1, 48), Color(0.30, 0.18, 0.09))
-		_box(self, "TreeCrown_%d" % i, Vector3(3.4, 3.4, 3.4), Vector3(x, 3.8, 48), Color(0.12, 0.35, 0.13), false)
+	for i in range(18):
+		var x := -76.0 + float(i) * 8.5
+		var z := 42.0 + float(i % 3) * 5.0
+		_box(self, "TreeTrunk_%d" % i, Vector3(0.45, 3.2, 0.45), Vector3(x, 1.0, z), Color(0.30, 0.18, 0.09))
+		var crown := MeshInstance3D.new()
+		crown.name = "TreeCrown_%d" % i
+		var crown_mesh := SphereMesh.new()
+		crown_mesh.radius = 1.8
+		crown_mesh.height = 3.8
+		crown.mesh = crown_mesh
+		crown.position = Vector3(x, 3.6, z)
+		crown.material_override = _material(Color(0.12 + float(i % 3) * 0.025, 0.30 + float(i % 4) * 0.025, 0.11), 0.95)
+		add_child(crown)
 
 func _create_city() -> void:
 	for i in range(5):
@@ -159,8 +183,9 @@ func _create_player() -> void:
 func _attach_camera(target_vehicle: Node3D) -> void:
 	var camera := Camera3D.new()
 	camera.name = "FollowCamera"
-	camera.position = Vector3(0, 6.5, 10)
-	camera.rotation_degrees = Vector3(-24, 0, 0)
+	camera.position = Vector3(0, 5.8, 9.5)
+	camera.rotation_degrees = Vector3(-23, 0, 0)
+	camera.fov = 75.0
 	target_vehicle.add_child(camera)
 	camera.current = true
 
