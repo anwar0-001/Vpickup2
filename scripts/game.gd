@@ -186,6 +186,12 @@ func _create_shops() -> void:
 	_label_3d("CAR DEALER\nE: Buy vehicle", Vector3(42, 6, -48), Color(0.85, 0.96, 1))
 	_building("FoodMarket", Vector3(10, 4, 9), Vector3(7, 1.5, -48), Color(0.25, 0.58, 0.32), Color(0.12, 0.26, 0.13))
 	_label_3d("FOOD MARKET\nE: Buy food", Vector3(7, 5, -48), Color(0.82, 1, 0.82))
+	# Marked parking bays beside the dealership for a more believable town.
+	_box(self, "DealershipParkingLot", Vector3(18, 0.10, 12), Vector3(42, 0.015, -34), Color(0.23, 0.24, 0.24), false)
+	for bay in range(5):
+		var bay_x := 35.0 + float(bay) * 3.5
+		_box(self, "ParkingBayLine_%d" % bay, Vector3(0.07, 0.025, 4.8), Vector3(bay_x, 0.08, -34), Color(0.91, 0.91, 0.84), false)
+	_box(self, "ParkingStopLine", Vector3(17, 0.025, 0.08), Vector3(42, 0.08, -31.5), Color(0.91, 0.91, 0.84), false)
 	for i in range(6):
 		var x := 53.0 + float(i % 3) * 13.0
 		var z := -17.0 - float(int(i / 3)) * 18.0
