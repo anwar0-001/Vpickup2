@@ -1,4 +1,8 @@
-# Vpickup2
+# Vpickup2 — الإصدار الثاني
+
+**اسم النسخة الحالية:** Vpickup2 - الإصدار الثاني
+
+This second edition focuses on improved world visuals, more detailed pickup geometry, and a richer city environment.
 
 Vpickup2 is an independent 3D driving and life-simulation game for Android, made with Godot 4 and original procedural geometry. It is inspired by the broad genre, not copied from PickUp Beta, and does not include that game's code or assets.
 
