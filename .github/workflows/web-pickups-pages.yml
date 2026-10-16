@@ -1,10 +1,16 @@
 name: Deploy Pickups Browser Game
 
 on:
+  pull_request:
+    paths:
+      - "web-pickups/**"
+      - "scripts/check-web.mjs"
+      - ".github/workflows/web-pickups-pages.yml"
   push:
     branches: [main]
     paths:
       - "web-pickups/**"
+      - "scripts/check-web.mjs"
       - ".github/workflows/web-pickups-pages.yml"
   workflow_dispatch:
 
@@ -18,7 +24,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: node --check web-pickups/game.js
+      - name: Check web game files
+        run: node scripts/check-web.mjs
+
   deploy:
+    if: github.event_name != 'pull_request'
+    needs: verify
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
