@@ -49,7 +49,13 @@ func _create_environment() -> void:
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
 	env.sky = Sky.new()
-	env.sky.sky_material = ProceduralSkyMaterial.new()
+	var sky_material := ProceduralSkyMaterial.new()
+	sky_material.sky_top_color = Color(0.10, 0.25, 0.48)
+	sky_material.sky_horizon_color = Color(0.58, 0.75, 0.91)
+	sky_material.ground_bottom_color = Color(0.16, 0.20, 0.16)
+	sky_material.ground_horizon_color = Color(0.58, 0.68, 0.70)
+	sky_material.sun_angle_max = 18.0
+	env.sky.sky_material = sky_material
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.72, 0.79, 0.9)
 	env.ambient_light_energy = 0.85
@@ -119,6 +125,8 @@ func _create_world() -> void:
 	_create_village()
 	_create_city()
 	_create_shops()
+	_create_street_furniture()
+	_create_distant_landscape()
 
 func _create_village() -> void:
 	for i in range(7):
@@ -170,8 +178,21 @@ func _building(building_name: String, size: Vector3, pos: Vector3, wall_color: C
 	_box(self, building_name + "_Roof", Vector3(size.x * 1.12, 0.5, size.z * 1.12), pos + Vector3(0, size.y / 2.0 + 0.25, 0), roof_color, false)
 	_box(self, building_name + "_Door", Vector3(0.8, 1.7, 0.12), pos + Vector3(0, -size.y * 0.16, size.z / 2.0 + 0.07), Color(0.22,0.13,0.08), false)
 	if size.y > 4.5:
+		var glass_colors := [Color(0.24,0.48,0.62), Color(0.62,0.72,0.76), Color(0.86,0.68,0.38)]
+		for floor_index in range(maxi(1, int(size.y / 2.8))):
+			for window_index in range(3):
+				var wx := (float(window_index) - 1.0) * size.x * 0.27
+				var wy := -size.y * 0.5 + 1.45 + float(floor_index) * 2.35
+				if wy < size.y * 0.42:
+					var glass_color: Color = glass_colors[(floor_index + window_index) % glass_colors.size()]
+					_box(self, building_name + "_FrontWindow_%d_%d" % [floor_index, window_index], Vector3(maxf(0.65, size.x * 0.14), 0.85, 0.055), pos + Vector3(wx, wy, size.z / 2.0 + 0.09), glass_color, false)
 		for side in [-1.0, 1.0]:
-			_box(self, building_name + "_Window_" + str(side), Vector3(1.0, 1.0, 0.12), pos + Vector3(side * size.x * 0.25, 0.2, size.z / 2.0 + 0.08), Color(0.36,0.68,0.82), false)
+			for floor_index in range(maxi(1, int(size.y / 3.0))):
+				for window_index in range(2):
+					var wz := (float(window_index) - 0.5) * size.z * 0.38
+					var wy := -size.y * 0.5 + 1.5 + float(floor_index) * 2.5
+					if wy < size.y * 0.42:
+						_box(self, building_name + "_SideWindow_%s_%d_%d" % [str(side), floor_index, window_index], Vector3(0.055, 0.8, 0.8), pos + Vector3(side * (size.x / 2.0 + 0.09), wy, wz), Color(0.25,0.46,0.59), false)
 
 func _create_player() -> void:
 	vehicle = VehicleScript.new()
@@ -401,3 +422,46 @@ func _load_game() -> void:
 	var saved_houses = save.get_value("player", "owned_houses", owned_houses)
 	if saved_houses is Array and saved_houses.size() == 6:
 		owned_houses.assign(saved_houses)
+
+ 
+func _create_street_furniture() -> void:
+	var pole_mat := _material(Color(0.18, 0.20, 0.22), 0.55, 0.35)
+	var curb_mat := _material(Color(0.56, 0.57, 0.54), 0.9)
+	var lamp_mat := StandardMaterial3D.new()
+	lamp_mat.albedo_color = Color(1.0, 0.82, 0.48)
+	lamp_mat.emission_enabled = true
+	lamp_mat.emission = Color(1.0, 0.55, 0.20)
+	lamp_mat.emission_energy_multiplier = 1.4
+	_box(self, "CitySidewalkLeft", Vector3(1.2, 0.18, 90), Vector3(19.9, 0.08, -55), curb_mat, false)
+	_box(self, "CitySidewalkRight", Vector3(1.2, 0.18, 90), Vector3(28.1, 0.08, -55), curb_mat, false)
+	_box(self, "VillageSidewalkLeft", Vector3(0.65, 0.14, 82), Vector3(-28.0, 0.04, 22), curb_mat, false)
+	_box(self, "VillageSidewalkRight", Vector3(0.65, 0.14, 82), Vector3(-20.0, 0.04, 22), curb_mat, false)
+	for i in range(9):
+		var z := -91.0 + float(i) * 9.0
+		var x := 18.7 if i % 2 == 0 else 29.3
+		_box(self, "StreetLightPole_%d" % i, Vector3(0.16, 5.8, 0.16), Vector3(x, 2.9, z), pole_mat, false)
+		_box(self, "StreetLightArm_%d" % i, Vector3(1.25, 0.12, 0.14), Vector3(x + (0.45 if x < 24.0 else -0.45), 5.65, z), pole_mat, false)
+		_box(self, "StreetLight_%d" % i, Vector3(0.52, 0.12, 0.36), Vector3(x + (0.95 if x < 24.0 else -0.95), 5.55, z), lamp_mat, false)
+	for i in range(8):
+		var z := -14.0 + float(i) * 10.0
+		var x := -30.8 if i % 2 == 0 else -17.2
+		_box(self, "VillageFencePost_%d" % i, Vector3(0.16, 0.9, 0.16), Vector3(x, 0.45, z), pole_mat, false)
+		_box(self, "VillageFenceRail_%d" % i, Vector3(0.12, 0.12, 4.8), Vector3(x, 0.65, z + 2.4), curb_mat, false)
+
+func _create_distant_landscape() -> void:
+	var hill_colors := [Color(0.29,0.40,0.31), Color(0.35,0.46,0.34), Color(0.40,0.48,0.40)]
+	for i in range(11):
+		var hill := MeshInstance3D.new()
+		hill.name = "DistantHill_%d" % i
+		var hill_mesh := SphereMesh.new()
+		hill_mesh.radius = 1.0
+		hill_mesh.height = 2.0
+		hill_mesh.radial_segments = 12
+		hill_mesh.rings = 6
+		hill.mesh = hill_mesh
+		var scale_x := 16.0 + float(i % 3) * 5.0
+		var scale_y := 8.0 + float(i % 4) * 2.5
+		hill.scale = Vector3(scale_x, scale_y, 11.0)
+		hill.position = Vector3(-105.0 + float(i) * 21.0, scale_y - 1.0, -112.0 - float(i % 3) * 5.0)
+		hill.material_override = _material(hill_colors[i % hill_colors.size()], 1.0)
+		add_child(hill)
