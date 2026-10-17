@@ -10,4 +10,5 @@ for(const name of ['missionUpdate','updateCamera','hud','loop']) {
   assert.equal(js.split('function '+name+'(').length-1,1,name+' must be defined exactly once');
 }
 assert.ok(js.includes('تعذر تشغيل الرسوم ثلاثية الأبعاد'),'WebGL failure must be visible');
+assert.ok(js.includes("['pointerup','pointercancel','lostpointercapture']"),'camera drag must stop on pointer release or cancellation');
 console.log('Web game structure checks passed');
