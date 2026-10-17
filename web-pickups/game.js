@@ -4,7 +4,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.m
 const root=document.querySelector('#game'), statusEl=document.querySelector('#status'), promptEl=document.querySelector('#prompt'), missionText=document.querySelector('#missionText'), timerBar=document.querySelector('#timer'), messageEl=document.querySelector('#message');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8fc7e8);scene.fog=new THREE.Fog(0x8fc7e8,100,270);
 const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,500);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;root.appendChild(renderer.domElement);
+let renderer;try{renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;root.appendChild(renderer.domElement)}catch(error){statusEl.textContent='تعذر تشغيل الرسوم ثلاثية الأبعاد';messageEl.textContent='يرجى استخدام متصفح يدعم WebGL وتحديث تعريف الرسوميات';console.error('WebGL initialization failed',error);throw error}
 const hemi=new THREE.HemisphereLight(0xc4e8ff,0x526044,2);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xfff0d5,3);sun.position.set(-65,95,50);sun.castShadow=true;sun.shadow.mapSize.set(1536,1536);sun.shadow.camera.left=-100;sun.shadow.camera.right=100;sun.shadow.camera.top=100;sun.shadow.camera.bottom=-100;scene.add(sun);
 const material=(c,r=.8,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
@@ -31,7 +31,7 @@ add(new THREE.CapsuleGeometry(.35,.72,4,8),M.shirt,body,0,1.1,0);add(new THREE.S
 const legs=[-.17,.17].map(x=>box(body,M.pants,x,.48,0,.18,.65,.2)),arms=[-.47,.47].map(x=>box(body,M.shirt,x,1.15,0,.15,.58,.17));player.position.set(0,0,3);
 const keys={};addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(e.code==='KeyF'||e.code==='KeyE')toggleCar();if(e.code==='KeyN')toggleDay()});addEventListener('keyup',e=>keys[e.code]=false);
 const touchControls=document.querySelector('#touchControls');touchControls?.querySelectorAll('button').forEach(button=>{const code=button.dataset.key;button.addEventListener('pointerdown',e=>{e.preventDefault();if(code==='KeyF'){toggleCar();return}keys[code]=true;button.setPointerCapture(e.pointerId)});for(const eventName of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(eventName,()=>{keys[code]=false})});addEventListener('blur',()=>{for(const code of Object.keys(keys))keys[code]=false});
-let cameraYaw=0,cameraPitch=.2,drag=false,lx=0,ly=0;renderer.domElement.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)});renderer.domElement.addEventListener('pointerup',()=>drag=false);renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;cameraYaw-=(e.clientX-lx)*.005;cameraPitch=THREE.MathUtils.clamp(cameraPitch+(e.clientY-ly)*.003,-.05,.8);lx=e.clientX;ly=e.clientY});
+let cameraYaw=0,cameraPitch=.2,drag=false,lx=0,ly=0;renderer.domElement.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)});for(const eventName of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(eventName,()=>drag=false);renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;cameraYaw-=(e.clientX-lx)*.005;cameraPitch=THREE.MathUtils.clamp(cameraPitch+(e.clientY-ly)*.003,-.05,.8);lx=e.clientX;ly=e.clientY});
 const cars=[],colors=[0xc43b35,0x287bb9,0xd4d8dc,0x25292c,0xd9a92d,0x38875b,0x7946a5];
 function makeCar(x,z,angle,color){const g=new THREE.Group();scene.add(g);g.position.set(x,.15,z);g.rotation.y=angle;const paint=material(color,.35,.2);box(g,paint,0,.55,0,1.9,.55,3.8);box(g,paint,0,.98,-.2,1.52,.5,1.9);box(g,M.dark,0,1.02,-.2,1.4,.36,1.7);box(g,paint,0,.54,1.4,1.75,.2,.7);box(g,M.black,0,.32,1.94,1.8,.18,.13);for(const xw of [-1,1])for(const zw of [-1.25,1.25]){const wh=add(new THREE.CylinderGeometry(.34,.34,.2,12),M.tire,g,xw,.34,zw);wh.rotation.z=Math.PI/2;const hub=add(new THREE.CylinderGeometry(.17,.17,.215,10),material(0xa9b1b4,.3,.7),g,xw,.34,zw);hub.rotation.z=Math.PI/2}box(g,M.white,-.58,.6,1.94,.3,.15,.05);box(g,M.white,.58,.6,1.94,.3,.15,.05);box(g,material(0xff332c),-.58,.6,-1.94,.28,.13,.05);box(g,material(0xff332c),.58,.6,-1.94,.28,.13,.05);const v={group:g,speed:0,parked:true};cars.push(v);return v}
 for(let i=-4;i<=4;i++){makeCar(-5.1,i*block+2,0,colors[(i+10+colors.length)%colors.length]);makeCar(5.1,i*block+14,Math.PI,colors[(i+12+colors.length)%colors.length])}
@@ -45,18 +45,47 @@ function movePlayer(dt){if(activeCar)return;const f=(keys.KeyW||keys.ArrowUp?1:0
 function moveCars(dt){for(const c of cars){if(c!==activeCar)continue;const g=c.group,a=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),boost=keys.ShiftLeft||keys.ShiftRight;c.speed+=a*(boost?18:11)*dt;c.speed*=Math.pow(.985,dt*60);c.speed=THREE.MathUtils.clamp(c.speed,-7,boost?25:17);if(keys.Space)c.speed*=Math.pow(.9,dt*60);g.rotation.y-=s*dt*(.8+Math.min(Math.abs(c.speed)/18,1))*Math.sign(c.speed||1);const x=g.position.x+Math.sin(g.rotation.y)*c.speed*dt,z=g.position.z+Math.cos(g.rotation.y)*c.speed*dt;if(!blocked(x,z)){g.position.x=x;g.position.z=z}else c.speed*=-.2;player.position.copy(g.position)}}
 const marker=new THREE.Group();scene.add(marker);const ring=add(new THREE.TorusGeometry(2.1,.15,10,32),M.gold,marker,0,1.5,0,false);ring.rotation.x=Math.PI/2;add(new THREE.CylinderGeometry(.08,.08,3,8),M.gold,marker,0,1.5,0,false);add(new THREE.CylinderGeometry(.08,.6,5,12,1,true),new THREE.MeshBasicMaterial({color:0xffc52d,transparent:true,opacity:.12,side:THREE.DoubleSide}),marker,0,3,0,false);
 const spots=[new THREE.Vector3(68,0,-68),new THREE.Vector3(-68,0,68),new THREE.Vector3(34,0,102),new THREE.Vector3(-102,0,-34),new THREE.Vector3(0,0,-102)];function newSpot(){marker.position.copy(spots[Math.floor(Math.random()*spots.length)])}newSpot();let mission='ready',remaining=45,done=0,cash=0;
-function missionUpdate(dt){marker.rotation.y+=dt*.7;const p=activeCar?activeCar.group.position:player.position,d=p.distanceTo(marker.position);if(mission==='ready'){missionText.textContent='اذهب إلى العلامة الذهبية لبدء تحدي الوقت.';if(d<5){mission='active';remaining=45;notify('انطلق! لديك 45 ثانية')}}else{remaining-=dt;missionText.textContent='وصل إلى العلامة الذهبية قبل انتهاء الوقت: '+Math.max(0,remaining).toFixed(1)+' ث';timerBar.style.width=Math.max(0,remaining/45*100)+'%';if(d<5){done++;cash+=500;mission='ready';newSpot();notify('نجحت المهمة! أضيف $500 إلى رصيدك (المجموع }else if(remaining<=0){mission='ready';newSpot();notify('انتهى الوقت، حاول مجدداً')}}}
-function updateCamera(dt){const p=activeCar?activeCar.group.position:player.position,yaw=activeCar?activeCar.group.rotation.y:cameraYaw,dist=activeCar?8:6.5;const dest=new THREE.Vector3(p.x+Math.sin(yaw)*dist*Math.cos(cameraPitch),p.y+(activeCar?3.3:2.8)+cameraPitch*2.5,p.z+Math.cos(yaw)*dist*Math.cos(cameraPitch));camera.position.lerp(dest,1-Math.pow(.001,dt));camera.lookAt(p.x,p.y+(activeCar?1.1:1.3),p.z)}
-function hud(){statusEl.textContent=(day?'☀ نهار':'☾ ليل')+'  |  '+(activeCar?'🚗 '+Math.round(Math.abs(activeCar.speed)*5)+' كم/س':'🚶 على الأقدام')+'  |  المهام: '+done+'  |  الرصيد: ;if(activeCar)promptEl.textContent='F/E: النزول • W/S: قيادة • A/D: انعطاف • Shift: تسارع';else{promptEl.textContent=cars.some(c=>player.position.distanceTo(c.group.position)<4.3)?'اضغط F أو E لركوب السيارة':'استكشف المدينة وابحث عن العلامة الذهبية'}}
-let last=performance.now();function loop(now){requestAnimationFrame(loop);const dt=Math.min((now-last)/1000,.04);last=now;movePlayer(dt);moveCars(dt);missionUpdate(dt);updateCamera(dt);hud();renderer.render(scene,camera)}requestAnimationFrame(loop);
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});+cash+')')}else if(remaining<=0){mission='ready';newSpot();notify('انتهى الوقت، حاول مجدداً')}}}
-function updateCamera(dt){const p=activeCar?activeCar.group.position:player.position,yaw=activeCar?activeCar.group.rotation.y:cameraYaw,dist=activeCar?8:6.5;const dest=new THREE.Vector3(p.x+Math.sin(yaw)*dist*Math.cos(cameraPitch),p.y+(activeCar?3.3:2.8)+cameraPitch*2.5,p.z+Math.cos(yaw)*dist*Math.cos(cameraPitch));camera.position.lerp(dest,1-Math.pow(.001,dt));camera.lookAt(p.x,p.y+(activeCar?1.1:1.3),p.z)}
-function hud(){statusEl.textContent=(day?'☀ نهار':'☾ ليل')+'  |  '+(activeCar?'🚗 '+Math.round(Math.abs(activeCar.speed)*5)+' كم/س':'🚶 على الأقدام')+'  |  المهام: '+done;if(activeCar)promptEl.textContent='F/E: النزول • W/S: قيادة • A/D: انعطاف • Shift: تسارع';else{promptEl.textContent=cars.some(c=>player.position.distanceTo(c.group.position)<4.3)?'اضغط F أو E لركوب السيارة':'استكشف المدينة وابحث عن العلامة الذهبية'}}
-let last=performance.now();function loop(now){requestAnimationFrame(loop);const dt=Math.min((now-last)/1000,.04);last=now;movePlayer(dt);moveCars(dt);missionUpdate(dt);updateCamera(dt);hud();renderer.render(scene,camera)}requestAnimationFrame(loop);
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});+cash;if(activeCar)promptEl.textContent='F/E: النزول • W/S: قيادة • A/D: انعطاف • Shift: تسارع';else{promptEl.textContent=cars.some(c=>player.position.distanceTo(c.group.position)<4.3)?'اضغط F أو E لركوب السيارة':'استكشف المدينة وابحث عن العلامة الذهبية'}}
-let last=performance.now();function loop(now){requestAnimationFrame(loop);const dt=Math.min((now-last)/1000,.04);last=now;movePlayer(dt);moveCars(dt);missionUpdate(dt);updateCamera(dt);hud();renderer.render(scene,camera)}requestAnimationFrame(loop);
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});+cash+')')}else if(remaining<=0){mission='ready';newSpot();notify('انتهى الوقت، حاول مجدداً')}}}
-function updateCamera(dt){const p=activeCar?activeCar.group.position:player.position,yaw=activeCar?activeCar.group.rotation.y:cameraYaw,dist=activeCar?8:6.5;const dest=new THREE.Vector3(p.x+Math.sin(yaw)*dist*Math.cos(cameraPitch),p.y+(activeCar?3.3:2.8)+cameraPitch*2.5,p.z+Math.cos(yaw)*dist*Math.cos(cameraPitch));camera.position.lerp(dest,1-Math.pow(.001,dt));camera.lookAt(p.x,p.y+(activeCar?1.1:1.3),p.z)}
-function hud(){statusEl.textContent=(day?'☀ نهار':'☾ ليل')+'  |  '+(activeCar?'🚗 '+Math.round(Math.abs(activeCar.speed)*5)+' كم/س':'🚶 على الأقدام')+'  |  المهام: '+done;if(activeCar)promptEl.textContent='F/E: النزول • W/S: قيادة • A/D: انعطاف • Shift: تسارع';else{promptEl.textContent=cars.some(c=>player.position.distanceTo(c.group.position)<4.3)?'اضغط F أو E لركوب السيارة':'استكشف المدينة وابحث عن العلامة الذهبية'}}
-let last=performance.now();function loop(now){requestAnimationFrame(loop);const dt=Math.min((now-last)/1000,.04);last=now;movePlayer(dt);moveCars(dt);missionUpdate(dt);updateCamera(dt);hud();renderer.render(scene,camera)}requestAnimationFrame(loop);
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+function missionUpdate(dt){
+  marker.rotation.y+=dt*.7;
+  const position=activeCar?activeCar.group.position:player.position;
+  const distance=position.distanceTo(marker.position);
+  if(mission==='ready'){
+    missionText.textContent='اذهب إلى العلامة الذهبية لبدء تحدي الوقت.';
+    timerBar.style.width='100%';
+    if(distance<5){mission='active';remaining=45;notify('انطلق! لديك 45 ثانية')}
+    return;
+  }
+  remaining-=dt;
+  missionText.textContent='وصل إلى العلامة الذهبية قبل انتهاء الوقت: '+Math.max(0,remaining).toFixed(1)+' ث';
+  timerBar.style.width=Math.max(0,remaining/45*100)+'%';
+  if(distance<5){
+    done++;cash+=500;mission='ready';newSpot();
+    notify('نجحت المهمة! أضيف $500 إلى رصيدك (المجموع $'+cash+')');
+  }else if(remaining<=0){
+    mission='ready';newSpot();timerBar.style.width='100%';
+    notify('انتهى الوقت، حاول مجدداً');
+  }
+}
+function updateCamera(dt){
+  const p=activeCar?activeCar.group.position:player.position;
+  const yaw=activeCar?activeCar.group.rotation.y:cameraYaw,dist=activeCar?8:6.5;
+  const dest=new THREE.Vector3(p.x+Math.sin(yaw)*dist*Math.cos(cameraPitch),p.y+(activeCar?3.3:2.8)+cameraPitch*2.5,p.z+Math.cos(yaw)*dist*Math.cos(cameraPitch));
+  camera.position.lerp(dest,1-Math.pow(.001,dt));camera.lookAt(p.x,p.y+(activeCar?1.1:1.3),p.z);
+}
+function hud(){
+  statusEl.textContent=(day?'☀ نهار':'☾ ليل')+'  |  '+(activeCar?'🚗 '+Math.round(Math.abs(activeCar.speed)*5)+' كم/س':'🚶 على الأقدام')+'  |  المهام: '+done+'  |  الرصيد: $'+cash;
+  if(activeCar)promptEl.textContent='F/E: النزول • W/S: قيادة • A/D: انعطاف • Shift: تسارع';
+  else promptEl.textContent=cars.some(c=>player.position.distanceTo(c.group.position)<4.3)?'اضغط F أو E لركوب السيارة':'استكشف المدينة وابحث عن العلامة الذهبية';
+}
+statusEl.textContent='المدينة جاهزة';
+let last=performance.now();
+function loop(now){
+  requestAnimationFrame(loop);
+  const dt=Math.min((now-last)/1000,.04);last=now;
+  movePlayer(dt);moveCars(dt);missionUpdate(dt);updateCamera(dt);hud();renderer.render(scene,camera);
+}
+requestAnimationFrame(loop);
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
