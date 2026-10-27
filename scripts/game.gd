@@ -24,6 +24,8 @@ var status_label: Label
 var money_label: Label
 var speed_label: Label
 var action_button: Button
+var pause_button: Button
+var pause_menu: PanelContainer
 var infinite_button: Button
 var world_environment: WorldEnvironment
 var sun_light: DirectionalLight3D
@@ -364,6 +366,19 @@ func _create_ui() -> void:
 	action_button.offset_bottom = -18
 	action_button.pressed.connect(_interact)
 	layer.add_child(action_button)
+	pause_button = Button.new()
+	pause_button.name = "PauseButton"
+	pause_button.text = "Ⅱ"
+	pause_button.custom_minimum_size = Vector2(64, 52)
+	pause_button.anchor_left = 1.0
+	pause_button.anchor_right = 1.0
+	pause_button.offset_left = -86
+	pause_button.offset_right = -18
+	pause_button.offset_top = 72
+	pause_button.offset_bottom = 126
+	pause_button.pressed.connect(_toggle_pause_menu)
+	layer.add_child(pause_button)
+	_create_pause_menu(layer)
 	# On-screen controls are available on phones and tablets; keyboard remains supported.
 	_make_hold_button(layer, "◀", "steer_left", Vector2(18, -142), Vector2(66, 62), false)
 	_make_hold_button(layer, "▶", "steer_right", Vector2(92, -142), Vector2(66, 62), false)
@@ -373,6 +388,68 @@ func _create_ui() -> void:
 	help.text = "WASD / arrows or touch controls"
 	help.position = Vector2(18, 126)
 	layer.add_child(help)
+
+func _create_pause_menu(layer: CanvasLayer) -> void:
+	pause_menu = PanelContainer.new()
+	pause_menu.name = "PauseMenu"
+	pause_menu.process_mode = Node.PROCESS_MODE_ALWAYS
+	pause_menu.visible = false
+	pause_menu.anchor_left = 0.5
+	pause_menu.anchor_right = 0.5
+	pause_menu.anchor_top = 0.5
+	pause_menu.anchor_bottom = 0.5
+	pause_menu.offset_left = -190
+	pause_menu.offset_right = 190
+	pause_menu.offset_top = -165
+	pause_menu.offset_bottom = 165
+	layer.add_child(pause_menu)
+	var menu_items := VBoxContainer.new()
+	menu_items.add_theme_constant_override("separation", 12)
+	pause_menu.add_child(menu_items)
+	var title := Label.new()
+	title.text = "PAUSED  |  اللعبة متوقفة"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	menu_items.add_child(title)
+	var resume_button := Button.new()
+	resume_button.text = "متابعة اللعب"
+	resume_button.custom_minimum_size.y = 52
+	resume_button.pressed.connect(_resume_game)
+	menu_items.add_child(resume_button)
+	var save_button := Button.new()
+	save_button.text = "حفظ التقدم الآن"
+	save_button.custom_minimum_size.y = 52
+	save_button.pressed.connect(_save_from_pause_menu)
+	menu_items.add_child(save_button)
+	var quit_button := Button.new()
+	quit_button.text = "حفظ والخروج"
+	quit_button.custom_minimum_size.y = 52
+	quit_button.pressed.connect(_quit_game)
+	menu_items.add_child(quit_button)
+
+func _toggle_pause_menu() -> void:
+	if not is_instance_valid(pause_menu):
+		return
+	if get_tree().paused:
+		_resume_game()
+	else:
+		pause_menu.visible = true
+		get_tree().paused = true
+
+func _resume_game() -> void:
+	get_tree().paused = false
+	if is_instance_valid(pause_menu):
+		pause_menu.visible = false
+
+func _save_from_pause_menu() -> void:
+	_save_game()
+	if is_instance_valid(status_label):
+		status_label.text = "تم حفظ التقدم بنجاح."
+
+func _quit_game() -> void:
+	_save_game()
+	get_tree().paused = false
+	get_tree().quit()
 
 func _make_hold_button(layer: CanvasLayer, caption: String, action: String, offset: Vector2, button_size: Vector2, right_side: bool) -> void:
 	var button := Button.new()
@@ -403,6 +480,8 @@ func _release_action(action: String) -> void:
 	Input.action_release(action)
 
 func _process(delta: float) -> void:
+	if Input.is_action_just_pressed("ui_cancel"):
+		_toggle_pause_menu()
 	_update_day_night(delta)
 	if Input.is_action_just_pressed("interact"):
 		_interact()
