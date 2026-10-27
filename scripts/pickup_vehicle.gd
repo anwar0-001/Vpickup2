@@ -11,6 +11,7 @@ var headlights: Array[SpotLight3D] = []
 var brake_lamps: Array[MeshInstance3D] = []
 var brake_lamp_material: StandardMaterial3D
 var turn_signal_lamps: Array[MeshInstance3D] = []
+var reverse_lamps: Array[MeshInstance3D] = []
 
 func _ready() -> void:
 	floor_snap_length = 0.4
@@ -61,6 +62,10 @@ func _build_vehicle() -> void:
 	var chrome := _mat(Color(0.72, 0.75, 0.76), 0.22, 0.9)
 	var lamp := _mat(Color(1.0, 0.88, 0.57), 0.2, 0.1)
 	var red_lamp := _mat(Color(0.85, 0.025, 0.018), 0.25, 0.0)
+	var reverse_lamp := _mat(Color(0.88, 0.94, 1.0), 0.22, 0.0)
+	reverse_lamp.emission_enabled = true
+	reverse_lamp.emission = Color(0.72, 0.84, 1.0)
+	reverse_lamp.emission_energy_multiplier = 0.9
 	var amber_lamp := _mat(Color(1.0, 0.36, 0.035), 0.24, 0.0)
 	amber_lamp.emission_enabled = true
 	amber_lamp.emission = Color(1.0, 0.22, 0.015)
@@ -106,6 +111,9 @@ func _build_vehicle() -> void:
 		_add_box("Headlight_%s" % str(x), Vector3(0.34, 0.19, 0.07), Vector3(x, 0.94, -1.91), lamp)
 		var tail_lamp := _add_box("TailLight_%s" % str(x), Vector3(0.20, 0.27, 0.07), Vector3(x, 0.88, 1.91), red_lamp)
 		brake_lamps.append(tail_lamp)
+		var reverse_lamp_node := _add_box("ReverseLamp_%s" % str(x), Vector3(0.11, 0.10, 0.075), Vector3(x * 0.72, 0.88, 1.955), reverse_lamp)
+		reverse_lamp_node.visible = false
+		reverse_lamps.append(reverse_lamp_node)
 		var front_indicator := _add_box("FrontTurnSignal_%s" % str(x), Vector3(0.13, 0.10, 0.075), Vector3(x * 1.12, 0.94, -1.94), amber_lamp)
 		var rear_indicator := _add_box("RearTurnSignal_%s" % str(x), Vector3(0.12, 0.10, 0.075), Vector3(x * 1.12, 0.88, 1.95), amber_lamp)
 		turn_signal_lamps.append(front_indicator)
@@ -150,6 +158,9 @@ func _physics_process(delta: float) -> void:
 	var accelerate_input := Input.get_action_strength("accelerate")
 	var brake_input := Input.get_action_strength("brake")
 	# Tail lamps brighten while braking or reversing, then return to a dim running-light glow.
+	for reverse_lamp_node in reverse_lamps:
+		if is_instance_valid(reverse_lamp_node):
+			reverse_lamp_node.visible = speed < -0.2
 	if is_instance_valid(brake_lamp_material):
 		var braking := brake_input > 0.05
 		brake_lamp_material.emission_energy_multiplier = 1.8 if braking else 0.15
