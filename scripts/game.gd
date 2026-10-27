@@ -256,6 +256,20 @@ func _create_shops() -> void:
 	_box(self, "FoodMarketSignPanel", Vector3(7.4, 0.68, 0.16), Vector3(7, 3.18, -43.30), Color(0.10, 0.25, 0.12), false)
 	_box(self, "FoodMarketDisplayGlassL", Vector3(2.25, 1.35, 0.07), Vector3(4.6, 1.65, -43.34), Color(0.25, 0.48, 0.58), false)
 	_box(self, "FoodMarketDisplayGlassR", Vector3(2.25, 1.35, 0.07), Vector3(9.4, 1.65, -43.34), Color(0.36, 0.58, 0.64), false)
+	# Warm storefront lighting joins the existing day/night street-light controller.
+	for shop_light_data in [
+		{"name": "DealershipEntranceGlow", "position": Vector3(42, 3.0, -41.8), "color": Color(0.64, 0.82, 1.0)},
+		{"name": "FoodMarketEntranceGlow", "position": Vector3(7, 2.6, -42.4), "color": Color(1.0, 0.72, 0.38)}
+	]:
+		var shop_light := OmniLight3D.new()
+		shop_light.name = shop_light_data["name"]
+		shop_light.position = shop_light_data["position"]
+		shop_light.light_color = shop_light_data["color"]
+		shop_light.light_energy = 0.0
+		shop_light.omni_range = 8.0
+		shop_light.shadow_enabled = false
+		add_child(shop_light)
+		street_lights.append(shop_light)
 	_label_3d("FOOD MARKET\nE: Buy food", Vector3(7, 3.14, -43.12), Color(0.82, 1, 0.82))
 	# Marked parking bays beside the dealership for a more believable town.
 	_box(self, "DealershipParkingLot", Vector3(18, 0.10, 12), Vector3(42, 0.015, -34), Color(0.23, 0.24, 0.24), false)
