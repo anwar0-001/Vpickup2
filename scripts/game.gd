@@ -291,7 +291,8 @@ func _create_ui() -> void:
 	vbox.add_child(status_label)
 	var controls := HBoxContainer.new()
 	vbox.add_child(controls)
-	var earn_button := Button.new()	earn_button.text = "Delivery +$%d" % DELIVERY_REWARD
+	var earn_button := Button.new()
+	earn_button.text = "Delivery +$%d" % DELIVERY_REWARD
 	earn_button.pressed.connect(_do_work)
 	controls.add_child(earn_button)
 	infinite_button = Button.new()
@@ -483,7 +484,8 @@ func _interact() -> void:
 func _save_game() -> void:
 	var save := ConfigFile.new()
 	save.set_value("player", "money", money)
-	save.set_value("player", "infinite_money", infinite_money)	save.set_value("player", "owned_houses", owned_houses)
+	save.set_value("player", "infinite_money", infinite_money)
+	save.set_value("player", "owned_houses", owned_houses)
 	save.set_value("missions", "delivery_stage", mission_stage)
 	if is_instance_valid(vehicle) and vehicle.is_inside_tree():
 		save.set_value("player", "vehicle_position", vehicle.global_position)
@@ -493,7 +495,8 @@ func _save_game() -> void:
 func _load_game() -> void:
 	var save := ConfigFile.new()
 	if save.load(SAVE_PATH) != OK:
-		return	money = int(save.get_value("player", "money", money))
+		return
+	money = int(save.get_value("player", "money", money))
 	mission_stage = clampi(int(save.get_value("missions", "delivery_stage", 0)), 0, 2)
 	infinite_money = bool(save.get_value("player", "infinite_money", infinite_money))
 	var saved_position = save.get_value("player", "vehicle_position", saved_vehicle_position)
