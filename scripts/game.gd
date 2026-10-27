@@ -444,15 +444,33 @@ func _process(delta: float) -> void:
 func _update_mission_objective(player_position: Vector3) -> void:
 	if not is_instance_valid(mission_label):
 		return
+	var target_position := Vector3.ZERO
+	var objective_text := ""
 	match mission_stage:
 		1:
-			var distance_to_pickup := Vector2(player_position.x - DELIVERY_PICKUP.x, player_position.z - DELIVERY_PICKUP.z).length()
-			mission_label.text = "DELIVERY  |  Collect parcel at village  |  %d m away" % roundi(distance_to_pickup)
+			target_position = DELIVERY_PICKUP
+			objective_text = "Collect parcel at village"
 		2:
-			var distance_to_dropoff := Vector2(player_position.x - DELIVERY_DROPOFF.x, player_position.z - DELIVERY_DROPOFF.z).length()
-			mission_label.text = "DELIVERY  |  Drop parcel in city  |  %d m away  |  Reward: $%d" % [roundi(distance_to_dropoff), DELIVERY_REWARD]
+			target_position = DELIVERY_DROPOFF
+			objective_text = "Drop parcel in city"
 		_:
 			mission_label.text = "MISSION  |  Start a delivery to earn $%d" % DELIVERY_REWARD
+			return
+	var target_offset := Vector2(target_position.x - player_position.x, target_position.z - player_position.z)
+	var distance_to_target := target_offset.length()
+	var forward_3d := -vehicle.global_transform.basis.z
+	var forward := Vector2(forward_3d.x, forward_3d.z).normalized()
+	var direction_to_target := target_offset.normalized()
+	var relative_angle := forward.angle_to(direction_to_target)
+	var direction_hint := "↑ AHEAD"
+	if relative_angle > 0.38:
+		direction_hint = "↻ RIGHT"
+	elif relative_angle < -0.38:
+		direction_hint = "↺ LEFT"
+	if mission_stage == 1:
+		mission_label.text = "DELIVERY  |  %s  |  %d m  |  %s" % [objective_text, roundi(distance_to_target), direction_hint]
+	else:
+		mission_label.text = "DELIVERY  |  %s  |  %d m  |  %s  |  Reward: $%d" % [objective_text, roundi(distance_to_target), direction_hint, DELIVERY_REWARD]
 
 func _update_hud() -> void:
 	if is_instance_valid(money_label):
