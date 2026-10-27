@@ -254,10 +254,9 @@ func _create_pedestrian_crossing_signals() -> void:
 
 func _create_road_lane_markings() -> void:
 	# Dashed centre line on the city road; low-profile mesh strips avoid physics changes.
-	var line_material := _material(Color(0.91, 0.87, 0.68), 0.92, 0.0)
 	for segment in range(18):
 		var z := -99.0 + float(segment) * 4.8
-		_box(self, "CityLaneDash_%02d" % segment, Vector3(0.10, 0.025, 2.25), Vector3(24.0, 0.055, z), line_material.albedo_color, false).material_override = line_material
+		_box(self, "CityLaneDash_%02d" % segment, Vector3(0.10, 0.025, 2.25), Vector3(24.0, 0.055, z), Color(0.91, 0.87, 0.68), false)
 
 func _create_traffic() -> void:
 	# Two lanes of low-speed traffic make the city feel active without heavy AI.
