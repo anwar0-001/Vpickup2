@@ -817,8 +817,8 @@ func _create_street_furniture() -> void:
 		_box(self, "CitySidewalkJointR_%d" % slab, Vector3(1.12, 0.018, 0.035), Vector3(28.1, 0.18, seam_z), joint_mat, false)
 	for slab in range(18):
 		var seam_z := -17.0 + float(slab) * 4.5
-		_box(self, "VillageSidewalkJointL_%d" % slab, Vector3(0.60, 0.018, 0.035), Vector3(-28.0, 0.15, seam_z), joint_mat, false)
-		_box(self, "VillageSidewalkJointR_%d" % slab, Vector3(0.60, 0.018, 0.035), Vector3(-20.0, 0.15, seam_z), joint_mat, false)
+		_box(self, "VillageSidewalkJointL_%d" % slab, Vector3(0.60, 0.018, 0.035), Vector3(-28.0, 0.12, seam_z), joint_mat, false)
+		_box(self, "VillageSidewalkJointR_%d" % slab, Vector3(0.60, 0.018, 0.035), Vector3(-20.0, 0.12, seam_z), joint_mat, false)
 	# Small metal drainage grates beside city intersections.
 	var grate_mat := _material(Color(0.12, 0.14, 0.15), 0.72, 0.45)
 	for crossing_index in range(5):
