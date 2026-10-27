@@ -131,6 +131,14 @@ func _build_vehicle() -> void:
 		add_child(beam)
 		headlights.append(beam)
 
+	# Small body details make the pickup feel less like a block model.
+	for side in [-1.0, 1.0]:
+		_add_box("DoorSeam_%s" % str(side), Vector3(0.025, 0.48, 0.018), Vector3(side * 1.014, 0.93, -0.28), paint_dark)
+		_add_box("FuelCap_%s" % str(side), Vector3(0.035, 0.16, 0.18), Vector3(side * 1.025, 0.91, 0.78), chrome)
+		_add_box("RearMudflap_%s" % str(side), Vector3(0.12, 0.30, 0.08), Vector3(side * 1.02, 0.30, 1.57), black)
+	for bed_rib in range(4):
+		_add_box("CargoBedRib_%d" % bed_rib, Vector3(1.32, 0.035, 0.045), Vector3(0, 1.105, 0.78 + float(bed_rib) * 0.28), chrome)
+
 	# Four detailed wheels with visible alloy hubs.
 	for x in [-1.02, 1.02]:
 		for z in [-1.22, 1.25]:
