@@ -54,16 +54,16 @@ func _build_car() -> void:
 	var tail_lamp := _mat(Color(0.85, 0.025, 0.018), 0.25)
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = Vector3(1.8, 1.25, 3.6)
+	shape.size = Vector3(1.8, 1.1, 3.6)
 	collision.shape = shape
-	collision.position.y = 0.65
+	collision.position.y = 0.55
 	add_child(collision)
-	_add_box("Body", Vector3(1.85, 0.62, 3.55), Vector3(0, 0.66, 0), paint)
-	_add_box("Cabin", Vector3(1.45, 0.62, 1.55), Vector3(0, 1.18, 0.10), paint)
-	_add_box("Windshield", Vector3(1.30, 0.42, 0.06), Vector3(0, 1.20, -0.70), glass)
-	_add_box("RearWindow", Vector3(1.28, 0.38, 0.06), Vector3(0, 1.20, 0.90), glass)
+	_add_box("Body", Vector3(1.85, 0.62, 3.55), Vector3(0, 0.48, 0), paint)
+	_add_box("Cabin", Vector3(1.45, 0.62, 1.55), Vector3(0, 0.95, 0.10), paint)
+	_add_box("Windshield", Vector3(1.30, 0.42, 0.06), Vector3(0, 0.97, -0.70), glass)
+	_add_box("RearWindow", Vector3(1.28, 0.38, 0.06), Vector3(0, 0.97, 0.90), glass)
 	for side in [-1.0, 1.0]:
 		for axle_z in [-1.10, 1.10]:
-			_add_box("Wheel_%s_%s" % [str(side), str(axle_z)], Vector3(0.22, 0.52, 0.72), Vector3(side * 0.91, 0.43, axle_z), rubber)
-		_add_box("Headlight_%s" % str(side), Vector3(0.34, 0.16, 0.06), Vector3(side * 0.58, 0.72, -1.81), lamp)
-		_add_box("TailLight_%s" % str(side), Vector3(0.30, 0.17, 0.06), Vector3(side * 0.60, 0.72, 1.81), tail_lamp)
+			_add_box("Wheel_%s_%s" % [str(side), str(axle_z)], Vector3(0.22, 0.52, 0.72), Vector3(side * 0.91, 0.26, axle_z), rubber)
+		_add_box("Headlight_%s" % str(side), Vector3(0.34, 0.16, 0.06), Vector3(side * 0.58, 0.54, -1.81), lamp)
+		_add_box("TailLight_%s" % str(side), Vector3(0.30, 0.17, 0.06), Vector3(side * 0.60, 0.54, 1.81), tail_lamp)
