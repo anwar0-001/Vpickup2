@@ -134,7 +134,7 @@ func _label_3d(text_value: String, pos: Vector3, color := Color.WHITE) -> void:
 
 func _create_world() -> void:
 	_box(self, "Terrain", Vector3(260, 1, 260), Vector3(0, -0.7, 0), Color(0.25, 0.48, 0.22))
-	_box(self, "VillageRoad", Vector3(7, 0.12, 114), Vector3(-24, -0.08, 22), Color(0.24, 0.24, 0.23), false)
+	_box(self, "VillageRoad", Vector3(7, 0.12, 105), Vector3(-24, -0.08, 22), Color(0.24, 0.24, 0.23), false)
 	_box(self, "CityRoad", Vector3(7, 0.14, 90), Vector3(24, -0.04, -55), Color(0.20, 0.21, 0.22), false)
 	_box(self, "ConnectingRoad", Vector3(55, 0.13, 7), Vector3(0, -0.05, -23), Color(0.20, 0.21, 0.22), false)
 	# Painted centre dashes and road edges.
@@ -142,7 +142,7 @@ func _create_world() -> void:
 		_box(self, "VillageRoadDash_%d" % i, Vector3(0.12, 0.025, 2.1), Vector3(-24, 0.0, -27.0 + float(i) * 6.0), Color(0.92, 0.83, 0.55), false)
 		_box(self, "CityRoadDash_%d" % i, Vector3(0.12, 0.025, 2.1), Vector3(24, 0.04, -96.0 + float(i) * 5.0), Color(0.92, 0.83, 0.55), false)
 	for side in [-1.0, 1.0]:
-		_box(self, "VillageRoadEdge_%s" % str(side), Vector3(0.09, 0.025, 114), Vector3(-24 + side * 3.15, 0.005, 22), Color(0.78, 0.78, 0.70), false)
+		_box(self, "VillageRoadEdge_%s" % str(side), Vector3(0.09, 0.025, 105), Vector3(-24 + side * 3.15, 0.005, 22), Color(0.78, 0.78, 0.70), false)
 		_box(self, "CityRoadEdge_%s" % str(side), Vector3(0.09, 0.025, 90), Vector3(24 + side * 3.15, 0.06, -55), Color(0.78, 0.78, 0.70), false)
 	_box(self, "ConnectingRoadDash", Vector3(40, 0.025, 0.12), Vector3(0, 0.02, -23), Color(0.92, 0.83, 0.55), false)
 	_label_3d("VILLAGE", Vector3(-40, 2, 62), Color(1, 0.94, 0.68))
