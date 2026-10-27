@@ -155,6 +155,15 @@ func _build_vehicle() -> void:
 		_add_box("FrontFender_%s" % str(side), Vector3(0.12, 0.18, 0.84), Vector3(side * 1.02, 0.82, -1.22), paint_dark)
 		_add_box("RearFender_%s" % str(side), Vector3(0.12, 0.18, 0.84), Vector3(side * 1.02, 0.82, 1.25), paint_dark)
 
+	# Rear exhaust tip and a compact tow hitch for the delivery-truck silhouette.
+	_add_cylinder("ExhaustPipe", 0.075, 0.34, Vector3(-0.68, 0.43, 1.98), chrome, 90.0)
+	_add_box("TowHitchMount", Vector3(0.34, 0.10, 0.24), Vector3(0, 0.40, 2.02), black)
+	_add_cylinder("TowHitchBall", 0.075, 0.09, Vector3(0, 0.34, 2.18), chrome)
+	# Small amber repeaters on the front fenders improve side visibility.
+	for side in [-1.0, 1.0]:
+		var side_repeater := _add_box("SideRepeater_%s" % str(side), Vector3(0.045, 0.09, 0.16), Vector3(side * 1.035, 0.94, -1.18), amber_lamp)
+		side_repeater.material_override = amber_lamp
+
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(2.05, 1.55, 3.75)
