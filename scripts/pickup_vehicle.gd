@@ -7,6 +7,7 @@ const REVERSE_SPEED := 10.0
 const FRICTION := 9.0
 const TURN_RATE := 1.55
 var speed := 0.0
+var headlights: Array[SpotLight3D] = []
 
 func _ready() -> void:
 	floor_snap_length = 0.4
@@ -94,6 +95,18 @@ func _build_vehicle() -> void:
 		_add_box("Headlight_%s" % str(x), Vector3(0.34, 0.19, 0.07), Vector3(x, 0.94, -1.91), lamp)
 		_add_box("TailLight_%s" % str(x), Vector3(0.20, 0.27, 0.07), Vector3(x, 0.88, 1.91), red_lamp)
 
+		var beam := SpotLight3D.new()
+		beam.name = "HeadlightBeam_%s" % str(x)
+		beam.position = Vector3(x, 0.94, -1.98)
+		beam.light_color = Color(1.0, 0.84, 0.58)
+		beam.light_energy = 3.0
+		beam.spot_range = 30.0
+		beam.spot_angle = 32.0
+		beam.shadow_enabled = false
+		beam.visible = false
+		add_child(beam)
+		headlights.append(beam)
+
 	# Four detailed wheels with visible alloy hubs.
 	for x in [-1.02, 1.02]:
 		for z in [-1.22, 1.25]:
@@ -118,16 +131,22 @@ func _build_vehicle() -> void:
 	add_child(collision)
 
 func _physics_process(delta: float) -> void:
-	var throttle := Input.get_action_strength("accelerate") - Input.get_action_strength("brake")
-	if throttle > 0.0:
+	var accelerate_input := Input.get_action_strength("accelerate")
+	var brake_input := Input.get_action_strength("brake")
+	if accelerate_input > 0.0:
 		speed = move_toward(speed, MAX_SPEED, ACCELERATION * delta)
-	elif throttle < 0.0:
-		speed = move_toward(speed, -REVERSE_SPEED, ACCELERATION * delta)
+	elif brake_input > 0.0:
+		if speed > 0.15:
+			# Braking slows a moving pickup before allowing reverse.
+			speed = move_toward(speed, 0.0, 26.0 * delta)
+		else:
+			speed = move_toward(speed, -REVERSE_SPEED, ACCELERATION * 0.7 * delta)
 	else:
 		speed = move_toward(speed, 0.0, FRICTION * delta)
 	var steer := Input.get_action_strength("steer_right") - Input.get_action_strength("steer_left")
-	if abs(speed) > 0.5:
-		rotation.y -= steer * TURN_RATE * delta * sign(speed)
+	var steering_factor := clampf(abs(speed) / MAX_SPEED, 0.18, 1.0)
+	if abs(speed) > 0.35:
+		rotation.y -= steer * TURN_RATE * steering_factor * delta * sign(speed)
 	var forward := -global_transform.basis.z
 	velocity.x = forward.x * speed
 	velocity.z = forward.z * speed
@@ -136,3 +155,22 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = -0.5
 	move_and_slide()
+	# Reduce speed on walls or other vehicles, but ignore floor contacts.
+	for collision_index in range(get_slide_collision_count()):
+		var hit := get_slide_collision(collision_index)
+		if absf(hit.get_normal().y) < 0.65:
+			speed = move_toward(speed, 0.0, 18.0 * delta)
+			break
+
+func _process(_delta: float) -> void:
+	var controller := get_tree().get_first_node_in_group("day_night_controller")
+	if controller == null:
+		return
+	var game_seconds := float(controller.get("game_time_seconds"))
+	var hour := game_seconds / 3600.0
+	var daylight := clampf(sin((hour - 6.0) * PI / 12.0), 0.0, 1.0)
+	var should_turn_on := daylight < 0.25
+	for headlight in headlights:
+		if is_instance_valid(headlight):
+			headlight.visible = should_turn_on
+
