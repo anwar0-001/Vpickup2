@@ -32,22 +32,15 @@ jobs:
     container:
       image: barichello/godot-ci:4.7.2
     steps:
-      - name: Install Android export dependencies
-        run: |
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-17-jdk unzip wget
-          mkdir -p "$HOME/.local/share/godot/export_templates/4.7.2.stable"
-          wget -q https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_export_templates.tpz -O /tmp/templates.tpz
-          mkdir -p /tmp/godot-templates
-          unzip -q /tmp/templates.tpz -d /tmp/godot-templates
-          cp /tmp/godot-templates/templates/* "$HOME/.local/share/godot/export_templates/4.7.2.stable/"
-          echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> "$GITHUB_ENV"
-      - name: Checkout source
-        uses: actions/checkout@v4
-      - name: Report toolchain versions
+      - name: Verify preinstalled Android export toolchain
         run: |
           godot --version
           java -version
+          test -d "$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          test -x "$ANDROID_HOME/cmdline-tools/cmdline-tools/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> "$GITHUB_ENV"
+      - name: Checkout source
+        uses: actions/checkout@v4
       - name: Import project resources
         run: godot --headless --editor --path . --quit
       - name: Validate project scripts
