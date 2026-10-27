@@ -16,6 +16,7 @@ Vpickup2 is an independent 3D driving and life-simulation game for Android, made
 - Automatic day/night cycle with a persistent in-game clock and warm street lights that turn on after dark.
 - Pickup headlights that automatically illuminate the road in low daylight, with braking-before-reverse handling, speed-sensitive steering, and collision slowdown against walls and vehicles.
 - Visible pickup/drop-off markers, a parcel displayed in the pickup bed, and saved mission progress.
+- Persistent mission objective HUD showing the current delivery step and live distance to the village pickup or city drop-off.
 - Food purchase interaction, house purchasing, and an infinite-money toggle.
 - Local save file for money, infinite-money setting and house ownership.
 - Android export preset and GitHub Actions workflow intended to build a debug APK.
