@@ -68,10 +68,11 @@ func _create_environment() -> void:
 	world_environment.environment = env
 	add_child(world_environment)
 
-func _material(color: Color, roughness := 0.9) -> StandardMaterial3D:
+func _material(color: Color, roughness := 0.9, metallic := 0.0) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = color
 	mat.roughness = roughness
+	mat.metallic = metallic
 	return mat
 
 func _box(parent: Node3D, label: String, size: Vector3, pos: Vector3, color: Color, collidable := true) -> MeshInstance3D:
