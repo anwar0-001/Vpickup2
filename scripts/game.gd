@@ -160,6 +160,7 @@ func _create_world() -> void:
 	_create_road_signs()
 	_create_bus_stops_and_benches()
 	_create_pedestrian_crossing_signals()
+	_create_zebra_crossings()
 
 func _create_road_signs() -> void:
 	# Simple roadside speed-limit signs help distinguish village and city driving.
@@ -250,6 +251,16 @@ func _create_pedestrian_crossing_signals() -> void:
 			green_lens.position = Vector3(x, 2.18, z - 2.16)
 			green_lens.material_override = _material(Color(0.15, 0.72, 0.28), 0.25)
 			add_child(green_lens)
+
+func _create_zebra_crossings() -> void:
+	# Painted pedestrian crossing bars across the city road at each signal location.
+	var paint := _material(Color(0.91, 0.92, 0.86), 0.9, 0.0)
+	for crossing_index in range(5):
+		var z := -78.0 + float(crossing_index) * 16.0
+		for stripe_index in range(7):
+			var x := 21.0 + float(stripe_index) * 1.0
+			var stripe := _box(self, "ZebraCrossing_%d_Stripe_%d" % [crossing_index, stripe_index], Vector3(0.62, 0.025, 1.25), Vector3(x, 0.055, z), paint.albedo_color, false)
+			stripe.material_override = paint
 
 func _create_traffic() -> void:
 	# Two lanes of low-speed traffic make the city feel active without heavy AI.
