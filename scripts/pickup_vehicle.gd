@@ -7,6 +7,7 @@ const REVERSE_SPEED := 10.0
 const FRICTION := 9.0
 const TURN_RATE := 1.55
 var speed := 0.0
+var headlights: Array[SpotLight3D] = []
 
 func _ready() -> void:
 	floor_snap_length = 0.4
@@ -94,6 +95,18 @@ func _build_vehicle() -> void:
 		_add_box("Headlight_%s" % str(x), Vector3(0.34, 0.19, 0.07), Vector3(x, 0.94, -1.91), lamp)
 		_add_box("TailLight_%s" % str(x), Vector3(0.20, 0.27, 0.07), Vector3(x, 0.88, 1.91), red_lamp)
 
+		var beam := SpotLight3D.new()
+		beam.name = "HeadlightBeam_%s" % str(x)
+		beam.position = Vector3(x, 0.94, -1.98)
+		beam.light_color = Color(1.0, 0.84, 0.58)
+		beam.light_energy = 3.0
+		beam.spot_range = 30.0
+		beam.spot_angle = 32.0
+		beam.shadow_enabled = false
+		beam.visible = false
+		add_child(beam)
+		headlights.append(beam)
+
 	# Four detailed wheels with visible alloy hubs.
 	for x in [-1.02, 1.02]:
 		for z in [-1.22, 1.25]:
@@ -136,3 +149,15 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = -0.5
 	move_and_slide()
+
+func _process(_delta: float) -> void:
+	var controller := get_tree().get_first_node_in_group("day_night_controller")
+	if controller == null:
+		return
+	var game_seconds := float(controller.get("game_time_seconds"))
+	var hour := game_seconds / 3600.0
+	var daylight := clampf(sin((hour - 6.0) * PI / 12.0), 0.0, 1.0)
+	var should_turn_on := daylight < 0.55
+	for headlight in headlights:
+		if is_instance_valid(headlight):
+			headlight.visible = should_turn_on
