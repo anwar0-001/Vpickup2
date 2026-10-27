@@ -155,6 +155,12 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = -0.5
 	move_and_slide()
+	# Reduce speed on walls or other vehicles, but ignore floor contacts.
+	for collision_index in range(get_slide_collision_count()):
+		var hit := get_slide_collision(collision_index)
+		if absf(hit.get_normal().y) < 0.65:
+			speed = move_toward(speed, 0.0, 18.0 * delta)
+			break
 
 func _process(_delta: float) -> void:
 	var controller := get_tree().get_first_node_in_group("day_night_controller")
