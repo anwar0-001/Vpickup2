@@ -86,9 +86,6 @@ func _create_environment() -> void:
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_BG
 	env.tonemap_exposure = 1.05
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.ssil_enabled = true
-	env.ssil_radius = 3.0
-	env.ssil_intensity = 0.55
 	world_environment.environment = env
 	add_child(world_environment)
 
