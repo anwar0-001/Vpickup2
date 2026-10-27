@@ -809,6 +809,25 @@ func _create_street_furniture() -> void:
 	_box(self, "CitySidewalkRight", Vector3(1.2, 0.18, 90), Vector3(28.1, 0.08, -55), curb_mat, false)
 	_box(self, "VillageSidewalkLeft", Vector3(0.65, 0.14, 82), Vector3(-28.0, 0.04, 22), curb_mat, false)
 	_box(self, "VillageSidewalkRight", Vector3(0.65, 0.14, 82), Vector3(-20.0, 0.04, 22), curb_mat, false)
+	# Subtle expansion joints give sidewalks scale and help them read as separate concrete slabs.
+	var joint_mat := _material(Color(0.34, 0.36, 0.35), 1.0)
+	for slab in range(20):
+		var seam_z := -98.0 + float(slab) * 4.5
+		_box(self, "CitySidewalkJointL_%d" % slab, Vector3(1.12, 0.018, 0.035), Vector3(19.9, 0.18, seam_z), joint_mat, false)
+		_box(self, "CitySidewalkJointR_%d" % slab, Vector3(1.12, 0.018, 0.035), Vector3(28.1, 0.18, seam_z), joint_mat, false)
+	for slab in range(18):
+		var seam_z := -17.0 + float(slab) * 4.5
+		_box(self, "VillageSidewalkJointL_%d" % slab, Vector3(0.60, 0.018, 0.035), Vector3(-28.0, 0.12, seam_z), joint_mat, false)
+		_box(self, "VillageSidewalkJointR_%d" % slab, Vector3(0.60, 0.018, 0.035), Vector3(-20.0, 0.12, seam_z), joint_mat, false)
+	# Small metal drainage grates beside city intersections.
+	var grate_mat := _material(Color(0.12, 0.14, 0.15), 0.72, 0.45)
+	for crossing_index in range(5):
+		var grate_z := -78.0 + float(crossing_index) * 16.0
+		for side in [-1.0, 1.0]:
+			var grate_x := 20.25 if side < 0.0 else 27.75
+			_box(self, "RoadDrain_%d_%s" % [crossing_index, str(side)], Vector3(0.32, 0.025, 0.72), Vector3(grate_x, 0.105, grate_z + 2.1), grate_mat, false)
+			for bar in range(5):
+				_box(self, "RoadDrainBar_%d_%s_%d" % [crossing_index, str(side), bar], Vector3(0.30, 0.028, 0.035), Vector3(grate_x, 0.122, grate_z + 1.82 + float(bar) * 0.14), curb_mat, false)
 	for i in range(9):
 		var z := -91.0 + float(i) * 9.0
 		var x := 18.7 if i % 2 == 0 else 29.3
