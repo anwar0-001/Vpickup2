@@ -68,6 +68,10 @@ func _create_environment() -> void:
 	world_environment = WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.58, 0.68, 0.76)
+	env.fog_density = 0.0015
+	env.fog_sun_scatter = 0.12
 	env.sky = Sky.new()
 	sky_material = ProceduralSkyMaterial.new()
 	sky_material.sky_top_color = Color(0.10, 0.25, 0.48)
@@ -82,9 +86,6 @@ func _create_environment() -> void:
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_BG
 	env.tonemap_exposure = 1.05
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.ssil_enabled = true
-	env.ssil_radius = 3.0
-	env.ssil_intensity = 0.55
 	world_environment.environment = env
 	add_child(world_environment)
 
