@@ -32,6 +32,7 @@ var day_night_label: Label
 var mission_label: Label
 var street_lights: Array[OmniLight3D] = []
 var game_time_seconds := 8.0 * 3600.0
+var autosave_elapsed := 0.0
 var touch_actions: Array[String] = ["steer_left", "steer_right", "accelerate", "brake"]
 var mission_stage: int = 0 # 0 = available, 1 = collect parcel, 2 = deliver parcel
 var pickup_marker: Node3D
@@ -404,6 +405,10 @@ func _release_action(action: String) -> void:
 
 func _process(delta: float) -> void:
 	_update_day_night(delta)
+	autosave_elapsed += delta
+	if autosave_elapsed >= 10.0:
+		autosave_elapsed = 0.0
+		_save_game()
 	if Input.is_action_just_pressed("interact"):
 		_interact()
 	if not is_instance_valid(vehicle):
