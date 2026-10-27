@@ -159,6 +159,7 @@ func _create_world() -> void:
 	_create_traffic()
 	_create_road_signs()
 	_create_bus_stops_and_benches()
+	_create_pedestrian_crossing_signals()
 
 func _create_road_signs() -> void:
 	# Simple roadside speed-limit signs help distinguish village and city driving.
@@ -219,6 +220,36 @@ func _create_bus_stops_and_benches() -> void:
 		var bin_x := 19.0 if bin_index % 2 == 0 else 29.0
 		_box(self, "StreetBin_%d_Body" % bin_index, Vector3(0.48, 0.78, 0.48), Vector3(bin_x, 0.48, bin_z), bin_material.albedo_color, false)
 		_box(self, "StreetBin_%d_Lid" % bin_index, Vector3(0.54, 0.10, 0.54), Vector3(bin_x, 0.91, bin_z), metal_material.albedo_color, false)
+
+func _create_pedestrian_crossing_signals() -> void:
+	# Compact pedestrian signals at the city cross streets, built from primitive meshes.
+	var pole_color := Color(0.16, 0.18, 0.19)
+	var housing_color := Color(0.12, 0.13, 0.14)
+	for crossing_index in range(5):
+		var z := -78.0 + float(crossing_index) * 16.0
+		for side in [-1.0, 1.0]:
+			var x := 19.1 if side < 0.0 else 28.9
+			var tag := "PedSignal_%d_%s" % [crossing_index, str(side)]
+			_box(self, tag + "_Pole", Vector3(0.12, 2.15, 0.12), Vector3(x, 1.08, z - 2.3), pole_color, false)
+			_box(self, tag + "_Head", Vector3(0.42, 0.62, 0.24), Vector3(x, 2.30, z - 2.3), housing_color, false)
+			var red_lens := MeshInstance3D.new()
+			red_lens.name = tag + "_Red"
+			var red_mesh := SphereMesh.new()
+			red_mesh.radius = 0.105
+			red_mesh.height = 0.12
+			red_lens.mesh = red_mesh
+			red_lens.position = Vector3(x, 2.43, z - 2.16)
+			red_lens.material_override = _material(Color(0.86, 0.12, 0.09), 0.25)
+			add_child(red_lens)
+			var green_lens := MeshInstance3D.new()
+			green_lens.name = tag + "_Green"
+			var green_mesh := SphereMesh.new()
+			green_mesh.radius = 0.105
+			green_mesh.height = 0.12
+			green_lens.mesh = green_mesh
+			green_lens.position = Vector3(x, 2.18, z - 2.16)
+			green_lens.material_override = _material(Color(0.15, 0.72, 0.28), 0.25)
+			add_child(green_lens)
 
 func _create_traffic() -> void:
 	# Two lanes of low-speed traffic make the city feel active without heavy AI.
