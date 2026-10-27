@@ -8,6 +8,8 @@ const FRICTION := 9.0
 const TURN_RATE := 1.55
 var speed := 0.0
 var headlights: Array[SpotLight3D] = []
+var brake_lamps: Array[MeshInstance3D] = []
+var brake_lamp_material: StandardMaterial3D
 
 func _ready() -> void:
 	floor_snap_length = 0.4
@@ -58,6 +60,10 @@ func _build_vehicle() -> void:
 	var chrome := _mat(Color(0.72, 0.75, 0.76), 0.22, 0.9)
 	var lamp := _mat(Color(1.0, 0.88, 0.57), 0.2, 0.1)
 	var red_lamp := _mat(Color(0.85, 0.025, 0.018), 0.25, 0.0)
+	brake_lamp_material = red_lamp
+	brake_lamp_material.emission_enabled = true
+	brake_lamp_material.emission = Color(0.9, 0.015, 0.008)
+	brake_lamp_material.emission_energy_multiplier = 0.15
 	var black := _mat(Color(0.075, 0.085, 0.09), 0.55, 0.2)
 
 	# Main chassis, bonnet, cab, and open cargo bed.
@@ -93,7 +99,8 @@ func _build_vehicle() -> void:
 	_add_box("RearBumper", Vector3(2.10, 0.15, 0.16), Vector3(0, 0.48, 1.94), chrome)
 	for x in [-0.69, 0.69]:
 		_add_box("Headlight_%s" % str(x), Vector3(0.34, 0.19, 0.07), Vector3(x, 0.94, -1.91), lamp)
-		_add_box("TailLight_%s" % str(x), Vector3(0.20, 0.27, 0.07), Vector3(x, 0.88, 1.91), red_lamp)
+		var tail_lamp := _add_box("TailLight_%s" % str(x), Vector3(0.20, 0.27, 0.07), Vector3(x, 0.88, 1.91), red_lamp)
+		brake_lamps.append(tail_lamp)
 
 		var beam := SpotLight3D.new()
 		beam.name = "HeadlightBeam_%s" % str(x)
@@ -133,6 +140,11 @@ func _build_vehicle() -> void:
 func _physics_process(delta: float) -> void:
 	var accelerate_input := Input.get_action_strength("accelerate")
 	var brake_input := Input.get_action_strength("brake")
+	# Tail lamps brighten while braking or reversing, then return to a dim running-light glow.
+	if is_instance_valid(brake_lamp_material):
+		var braking := brake_input > 0.05
+		brake_lamp_material.emission_energy_multiplier = 1.8 if braking else 0.15
+		brake_lamp_material.albedo_color = Color(1.0, 0.04, 0.025) if braking else Color(0.85, 0.025, 0.018)
 	if accelerate_input > 0.0:
 		speed = move_toward(speed, MAX_SPEED, ACCELERATION * delta)
 	elif brake_input > 0.0:
