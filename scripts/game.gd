@@ -247,9 +247,16 @@ func _create_city() -> void:
 
 func _create_shops() -> void:
 	_building("CarDealership", Vector3(13, 5, 10), Vector3(42, 2, -48), Color(0.20, 0.46, 0.68), Color(0.08, 0.15, 0.22))
-	_label_3d("CAR DEALER\nE: Buy vehicle", Vector3(42, 6, -48), Color(0.85, 0.96, 1))
+	# Shop fascia panels and display glazing make the entrances read clearly from the road.
+	_box(self, "DealershipSignPanel", Vector3(8.8, 0.72, 0.16), Vector3(42, 4.15, -42.82), Color(0.06, 0.12, 0.18), false)
+	_box(self, "DealershipDisplayGlassL", Vector3(3.2, 1.75, 0.07), Vector3(39.0, 2.1, -42.84), Color(0.18, 0.40, 0.53), false)
+	_box(self, "DealershipDisplayGlassR", Vector3(3.2, 1.75, 0.07), Vector3(45.0, 2.1, -42.84), Color(0.24, 0.48, 0.60), false)
+	_label_3d("CAR DEALER\nE: Buy vehicle", Vector3(42, 4.12, -42.65), Color(0.85, 0.96, 1))
 	_building("FoodMarket", Vector3(10, 4, 9), Vector3(7, 1.5, -48), Color(0.25, 0.58, 0.32), Color(0.12, 0.26, 0.13))
-	_label_3d("FOOD MARKET\nE: Buy food", Vector3(7, 5, -48), Color(0.82, 1, 0.82))
+	_box(self, "FoodMarketSignPanel", Vector3(7.4, 0.68, 0.16), Vector3(7, 3.18, -43.30), Color(0.10, 0.25, 0.12), false)
+	_box(self, "FoodMarketDisplayGlassL", Vector3(2.25, 1.35, 0.07), Vector3(4.6, 1.65, -43.34), Color(0.25, 0.48, 0.58), false)
+	_box(self, "FoodMarketDisplayGlassR", Vector3(2.25, 1.35, 0.07), Vector3(9.4, 1.65, -43.34), Color(0.36, 0.58, 0.64), false)
+	_label_3d("FOOD MARKET\nE: Buy food", Vector3(7, 3.14, -43.12), Color(0.82, 1, 0.82))
 	# Marked parking bays beside the dealership for a more believable town.
 	_box(self, "DealershipParkingLot", Vector3(18, 0.10, 12), Vector3(42, 0.015, -34), Color(0.23, 0.24, 0.24), false)
 	for bay in range(5):
