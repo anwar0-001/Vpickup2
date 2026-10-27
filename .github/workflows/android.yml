@@ -32,12 +32,14 @@ jobs:
     container:
       image: barichello/godot-ci:4.7.2
     steps:
-      - name: Verify preinstalled Android export toolchain
+      - name: Prepare preinstalled Android export toolchain
         run: |
           godot --version
           java -version
-          test -d "$HOME/.local/share/godot/export_templates/4.7.2.stable"
-          test -x "$ANDROID_HOME/cmdline-tools/cmdline-tools/bin/sdkmanager" || test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          cp -a /root/.local/share/godot/export_templates/4.7.2.stable/. "$HOME/.local/share/godot/export_templates/4.7.2.stable/"
+          test -s "$HOME/.local/share/godot/export_templates/4.7.2.stable/android_debug.apk"
+          test -x "$ANDROID_HOME/cmdline-tools/cmdline-tools/bin/sdkmanager"
           echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> "$GITHUB_ENV"
       - name: Checkout source
         uses: actions/checkout@v4
