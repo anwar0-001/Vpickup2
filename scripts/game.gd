@@ -158,6 +158,7 @@ func _create_world() -> void:
 	_create_delivery_points()
 	_create_traffic()
 	_create_road_signs()
+	_create_bus_stops_and_benches()
 
 func _create_road_signs() -> void:
 	# Simple roadside speed-limit signs help distinguish village and city driving.
@@ -191,6 +192,33 @@ func _create_road_signs() -> void:
 		area_label.modulate = Color(1.0, 0.92, 0.62)
 		area_label.position = sign_position + Vector3(0, 3.05, 0)
 		add_child(area_label)
+
+func _create_bus_stops_and_benches() -> void:
+	# Small roadside props add scale and make the city sidewalks feel inhabited.
+	var metal_material := _material(Color(0.18, 0.21, 0.23), 0.52, 0.48)
+	var wood_material := _material(Color(0.42, 0.25, 0.13), 0.82, 0.0)
+	var glass_material := _material(Color(0.35, 0.58, 0.67), 0.28, 0.0)
+	var bin_material := _material(Color(0.24, 0.34, 0.29), 0.72, 0.1)
+	for stop_index in range(2):
+		var stop_z := -70.0 + float(stop_index) * 38.0
+		var stop_x := 29.6 if stop_index == 0 else 18.4
+		_box(self, "BusStop_%d_Base" % stop_index, Vector3(2.4, 0.12, 1.3), Vector3(stop_x, 0.19, stop_z), Color(0.48, 0.49, 0.46), false)
+		for leg_index in range(4):
+			var leg_x := -0.92 if leg_index % 2 == 0 else 0.92
+			var leg_z := -0.42 if leg_index < 2 else 0.42
+			_box(self, "BusStop_%d_Leg_%d" % [stop_index, leg_index], Vector3(0.09, 1.7, 0.09), Vector3(stop_x + leg_x, 1.02, stop_z + leg_z), metal_material.albedo_color, false)
+		_box(self, "BusStop_%d_Roof" % stop_index, Vector3(2.6, 0.14, 1.55), Vector3(stop_x, 1.95, stop_z), Color(0.20, 0.34, 0.43), false)
+		_box(self, "BusStop_%d_BackGlass" % stop_index, Vector3(2.25, 1.25, 0.055), Vector3(stop_x, 1.18, stop_z - 0.48), glass_material.albedo_color, false)
+		_box(self, "BusStop_%d_BenchSeat" % stop_index, Vector3(1.65, 0.12, 0.42), Vector3(stop_x, 0.72, stop_z + 0.08), wood_material.albedo_color, false)
+		_box(self, "BusStop_%d_BenchBack" % stop_index, Vector3(1.65, 0.48, 0.10), Vector3(stop_x, 1.0, stop_z + 0.27), wood_material.albedo_color, false)
+		_box(self, "BusStop_%d_SignPole" % stop_index, Vector3(0.08, 2.1, 0.08), Vector3(stop_x + 1.55, 1.05, stop_z + 0.15), metal_material.albedo_color, false)
+		_box(self, "BusStop_%d_SignBoard" % stop_index, Vector3(0.48, 0.62, 0.12), Vector3(stop_x + 1.55, 2.0, stop_z + 0.15), Color(0.12, 0.42, 0.32), false)
+		_label_3d("BUS", Vector3(stop_x + 1.55, 2.0, stop_z + 0.06), Color(1.0, 0.96, 0.72))
+	for bin_index in range(5):
+		var bin_z := -90.0 + float(bin_index) * 17.0
+		var bin_x := 19.0 if bin_index % 2 == 0 else 29.0
+		_box(self, "StreetBin_%d_Body" % bin_index, Vector3(0.48, 0.78, 0.48), Vector3(bin_x, 0.48, bin_z), bin_material.albedo_color, false)
+		_box(self, "StreetBin_%d_Lid" % bin_index, Vector3(0.54, 0.10, 0.54), Vector3(bin_x, 0.91, bin_z), metal_material.albedo_color, false)
 
 func _create_traffic() -> void:
 	# Two lanes of low-speed traffic make the city feel active without heavy AI.
