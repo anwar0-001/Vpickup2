@@ -188,7 +188,7 @@ func _process(_delta: float) -> void:
 	var steer_input := Input.get_action_strength("steer_right") - Input.get_action_strength("steer_left")
 	var blink_on := fposmod(float(Time.get_ticks_msec()) / 1000.0, 0.8) < 0.42
 	for index in range(turn_signal_lamps.size()):
-		var is_right_side := index % 2 == 0
+		var is_right_side := index >= 2
 		var should_blink := (steer_input > 0.15 and is_right_side) or (steer_input < -0.15 and not is_right_side)
 		turn_signal_lamps[index].visible = should_blink and blink_on
 	var controller := get_tree().get_first_node_in_group("day_night_controller")
