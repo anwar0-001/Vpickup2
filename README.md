@@ -18,7 +18,7 @@ Vpickup2 is an independent 3D driving and life-simulation game for Android, made
 - Visible pickup/drop-off markers, a parcel displayed in the pickup bed, and saved mission progress.
 - Persistent mission objective HUD showing the current delivery step and live distance to the village pickup or city drop-off.
 - Food purchase interaction, house purchasing, and an infinite-money toggle.
-- Local save file for money, infinite-money setting and house ownership.
+- Local save file for money, infinite-money setting, house ownership, mission progress, world time and vehicle position; progress autosaves every 10 seconds and when the app pauses or closes.
 - Android export preset and GitHub Actions workflow intended to build a debug APK.
 
 ## Controls
