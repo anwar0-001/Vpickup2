@@ -10,6 +10,8 @@ const CAR_PRICE := 2500
 const DELIVERY_REWARD := 350
 const DELIVERY_PICKUP := Vector3(-24, 0.0, -15)
 const DELIVERY_DROPOFF := Vector3(24, 0.0, -86)
+const DAY_LENGTH_SECONDS := 480.0
+const GAME_DAY_SECONDS := 86400.0
 
 var money: int = 500
 var infinite_money := true
@@ -24,6 +26,11 @@ var speed_label: Label
 var action_button: Button
 var infinite_button: Button
 var world_environment: WorldEnvironment
+var sun_light: DirectionalLight3D
+var sky_material: ProceduralSkyMaterial
+var day_night_label: Label
+var street_lights: Array[OmniLight3D] = []
+var game_time_seconds := 8.0 * 3600.0
 var touch_actions: Array[String] = ["steer_left", "steer_right", "accelerate", "brake"]
 var mission_stage: int = 0 # 0 = available, 1 = collect parcel, 2 = deliver parcel
 var pickup_marker: Node3D
@@ -32,6 +39,7 @@ var package_visual: MeshInstance3D
 
 func _ready() -> void:
 	_load_game()
+	add_to_group("day_night_controller")
 	_create_environment()
 	_create_world()
 	_create_player()
@@ -46,18 +54,18 @@ func _exit_tree() -> void:
 	_save_game()
 
 func _create_environment() -> void:
-	var sun := DirectionalLight3D.new()
-	sun.name = "Sun"
-	sun.rotation_degrees = Vector3(-48, -30, 0)
-	sun.light_energy = 1.35
-	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 120.0
-	add_child(sun)
+	sun_light = DirectionalLight3D.new()
+	sun_light.name = "Sun"
+	sun_light.rotation_degrees = Vector3(-48, -30, 0)
+	sun_light.light_energy = 1.35
+	sun_light.shadow_enabled = true
+	sun_light.directional_shadow_max_distance = 120.0
+	add_child(sun_light)
 	world_environment = WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
 	env.sky = Sky.new()
-	var sky_material := ProceduralSkyMaterial.new()
+	sky_material = ProceduralSkyMaterial.new()
 	sky_material.sky_top_color = Color(0.10, 0.25, 0.48)
 	sky_material.sky_horizon_color = Color(0.58, 0.75, 0.91)
 	sky_material.ground_bottom_color = Color(0.16, 0.20, 0.16)
@@ -285,6 +293,14 @@ func _create_ui() -> void:
 	edition_label.offset_top = 18
 	edition_label.offset_bottom = 52
 	layer.add_child(edition_label)
+	day_night_label = Label.new()
+	day_night_label.name = "DayNightClock"
+	day_night_label.add_theme_font_size_override("font_size", 20)
+	day_night_label.anchor_left = 0.02
+	day_night_label.anchor_right = 0.30
+	day_night_label.offset_top = 126
+	day_night_label.offset_bottom = 156
+	layer.add_child(day_night_label)
 	speed_label = Label.new()
 	speed_label.name = "Speedometer"
 	speed_label.text = "0 km/h  |  N"
@@ -307,7 +323,7 @@ func _create_ui() -> void:
 	money_label.add_theme_font_size_override("font_size", 24)
 	vbox.add_child(money_label)
 	status_label = Label.new()
-	status_label.text = "Drive to explore. Work to earn money; visit shops and houses."
+	status_label.text = "Drive to explore. Start a delivery, visit shops and houses."
 	status_label.custom_minimum_size = Vector2(260, 45)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(status_label)
@@ -372,7 +388,8 @@ func _press_action(action: String) -> void:
 func _release_action(action: String) -> void:
 	Input.action_release(action)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_update_day_night(delta)
 	if Input.is_action_just_pressed("interact"):
 		_interact()
 	if not is_instance_valid(vehicle):
@@ -509,6 +526,7 @@ func _save_game() -> void:
 	save.set_value("player", "infinite_money", infinite_money)
 	save.set_value("player", "owned_houses", owned_houses)
 	save.set_value("missions", "delivery_stage", mission_stage)
+	save.set_value("world", "time_seconds", game_time_seconds)
 	if is_instance_valid(vehicle) and vehicle.is_inside_tree():
 		save.set_value("player", "vehicle_position", vehicle.global_position)
 		save.set_value("player", "vehicle_rotation", vehicle.global_rotation)
@@ -520,6 +538,7 @@ func _load_game() -> void:
 		return
 	money = int(save.get_value("player", "money", money))
 	mission_stage = clampi(int(save.get_value("missions", "delivery_stage", 0)), 0, 2)
+	game_time_seconds = float(save.get_value("world", "time_seconds", game_time_seconds))
 	infinite_money = bool(save.get_value("player", "infinite_money", infinite_money))
 	var saved_position = save.get_value("player", "vehicle_position", saved_vehicle_position)
 	var saved_rotation = save.get_value("player", "vehicle_rotation", saved_vehicle_rotation)
@@ -595,6 +614,33 @@ func _attach_delivery_package() -> void:
 	package_visual.material_override = _material(Color(0.68, 0.43, 0.20), 0.9)
 	vehicle.add_child(package_visual)
 
+func _update_day_night(delta: float) -> void:
+	game_time_seconds = fposmod(game_time_seconds + delta * GAME_DAY_SECONDS / DAY_LENGTH_SECONDS, GAME_DAY_SECONDS)
+	var hour := game_time_seconds / 3600.0
+	var daylight := clampf(sin((hour - 6.0) * PI / 12.0), 0.0, 1.0)
+	var darkness := 1.0 - daylight
+	if is_instance_valid(sun_light):
+		sun_light.rotation_degrees = Vector3(hour / 24.0 * 360.0 + 90.0, -30.0, 0.0)
+		sun_light.light_energy = lerpf(0.035, 1.35, daylight)
+		sun_light.light_color = Color(0.54, 0.66, 1.0).lerp(Color(1.0, 0.91, 0.76), daylight)
+	if is_instance_valid(world_environment) and world_environment.environment != null:
+		var env := world_environment.environment
+		env.ambient_light_color = Color(0.10, 0.16, 0.32).lerp(Color(0.72, 0.79, 0.9), daylight)
+		env.ambient_light_energy = lerpf(0.22, 0.85, daylight)
+	if is_instance_valid(sky_material):
+		sky_material.sky_top_color = Color(0.008, 0.015, 0.07).lerp(Color(0.10, 0.25, 0.48), daylight)
+		sky_material.sky_horizon_color = Color(0.035, 0.055, 0.13).lerp(Color(0.58, 0.75, 0.91), daylight)
+		sky_material.ground_bottom_color = Color(0.025, 0.035, 0.045).lerp(Color(0.16, 0.20, 0.16), daylight)
+		sky_material.ground_horizon_color = Color(0.04, 0.07, 0.12).lerp(Color(0.58, 0.68, 0.70), daylight)
+	for street_light in street_lights:
+		if is_instance_valid(street_light):
+			street_light.light_energy = 1.8 if darkness > 0.45 else 0.0
+	if is_instance_valid(day_night_label):
+		var hour_int := int(floor(hour))
+		var minute_int := int(floor(fposmod(game_time_seconds, 3600.0) / 60.0))
+		var period := "Night" if hour < 6.0 or hour >= 18.0 else ("Sunrise" if hour < 8.0 else ("Sunset" if hour >= 16.0 else "Day"))
+		day_night_label.text = "Time %02d:%02d  |  %s" % [hour_int, minute_int, period]
+
 func _create_street_furniture() -> void:
 	var pole_mat := _material(Color(0.18, 0.20, 0.22), 0.55, 0.35)
 	var curb_mat := _material(Color(0.56, 0.57, 0.54), 0.9)
@@ -612,7 +658,17 @@ func _create_street_furniture() -> void:
 		var x := 18.7 if i % 2 == 0 else 29.3
 		_box(self, "StreetLightPole_%d" % i, Vector3(0.16, 5.8, 0.16), Vector3(x, 2.9, z), pole_mat, false)
 		_box(self, "StreetLightArm_%d" % i, Vector3(1.25, 0.12, 0.14), Vector3(x + (0.45 if x < 24.0 else -0.45), 5.65, z), pole_mat, false)
-		_box(self, "StreetLight_%d" % i, Vector3(0.52, 0.12, 0.36), Vector3(x + (0.95 if x < 24.0 else -0.95), 5.55, z), lamp_mat, false)
+		var lamp_x := x + (0.95 if x < 24.0 else -0.95)
+		_box(self, "StreetLight_%d" % i, Vector3(0.52, 0.12, 0.36), Vector3(lamp_x, 5.55, z), lamp_mat, false)
+		var street_light := OmniLight3D.new()
+		street_light.name = "StreetLightGlow_%d" % i
+		street_light.position = Vector3(lamp_x, 5.2, z)
+		street_light.light_color = Color(1.0, 0.68, 0.36)
+		street_light.light_energy = 0.0
+		street_light.omni_range = 16.0
+		street_light.shadow_enabled = false
+		add_child(street_light)
+		street_lights.append(street_light)
 	for i in range(8):
 		var z := -14.0 + float(i) * 10.0
 		var x := -30.8 if i % 2 == 0 else -17.2
