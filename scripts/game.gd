@@ -29,6 +29,7 @@ var world_environment: WorldEnvironment
 var sun_light: DirectionalLight3D
 var sky_material: ProceduralSkyMaterial
 var day_night_label: Label
+var mission_label: Label
 var street_lights: Array[OmniLight3D] = []
 var game_time_seconds := 8.0 * 3600.0
 var touch_actions: Array[String] = ["steer_left", "steer_right", "accelerate", "brake"]
@@ -301,6 +302,19 @@ func _create_ui() -> void:
 	day_night_label.offset_top = 126
 	day_night_label.offset_bottom = 156
 	layer.add_child(day_night_label)
+	mission_label = Label.new()
+	mission_label.name = "MissionObjective"
+	mission_label.text = "MISSION  |  Start a delivery to earn $%d" % DELIVERY_REWARD
+	mission_label.add_theme_font_size_override("font_size", 18)
+	mission_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.48))
+	mission_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	mission_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	mission_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	mission_label.anchor_left = 0.24
+	mission_label.anchor_right = 0.76
+	mission_label.offset_top = 54
+	mission_label.offset_bottom = 96
+	layer.add_child(mission_label)
 	speed_label = Label.new()
 	speed_label.name = "Speedometer"
 	speed_label.text = "0 km/h  |  N"
@@ -400,6 +414,7 @@ func _process(delta: float) -> void:
 		var gear := "R" if current_speed < -0.5 else ("D" if current_speed > 0.5 else "N")
 		speed_label.text = "%d km/h  |  %s" % [roundi(vehicle_speed * 3.6), gear]
 	var p := vehicle.global_position
+	_update_mission_objective(p)
 	var dealer_distance := Vector2(p.x - 42, p.z + 48).length()
 	var food_distance := Vector2(p.x - 7, p.z + 48).length()
 	var pickup_distance := Vector2(p.x - DELIVERY_PICKUP.x, p.z - DELIVERY_PICKUP.z).length()
@@ -425,6 +440,19 @@ func _process(delta: float) -> void:
 				current_nearby_action = "house_%d" % i
 				status_label.text = "House %d: %s. Interact to buy ($%d)." % [i + 1, "Owned" if owned_houses[i] else "For sale", HOUSE_PRICE]
 				return
+
+func _update_mission_objective(player_position: Vector3) -> void:
+	if not is_instance_valid(mission_label):
+		return
+	match mission_stage:
+		1:
+			var distance_to_pickup := Vector2(player_position.x - DELIVERY_PICKUP.x, player_position.z - DELIVERY_PICKUP.z).length()
+			mission_label.text = "DELIVERY  |  Collect parcel at village  |  %d m away" % roundi(distance_to_pickup)
+		2:
+			var distance_to_dropoff := Vector2(player_position.x - DELIVERY_DROPOFF.x, player_position.z - DELIVERY_DROPOFF.z).length()
+			mission_label.text = "DELIVERY  |  Drop parcel in city  |  %d m away  |  Reward: $%d" % [roundi(distance_to_dropoff), DELIVERY_REWARD]
+		_:
+			mission_label.text = "MISSION  |  Start a delivery to earn $%d" % DELIVERY_REWARD
 
 func _update_hud() -> void:
 	if is_instance_valid(money_label):
