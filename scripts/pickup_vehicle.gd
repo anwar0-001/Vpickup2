@@ -174,14 +174,3 @@ func _process(_delta: float) -> void:
 		if is_instance_valid(headlight):
 			headlight.visible = should_turn_on
 
-func _process(_delta: float) -> void:
-	var controller := get_tree().get_first_node_in_group("day_night_controller")
-	if controller == null:
-		return
-	var game_seconds := float(controller.get("game_time_seconds"))
-	var hour := game_seconds / 3600.0
-	var daylight := clampf(sin((hour - 6.0) * PI / 12.0), 0.0, 1.0)
-	var should_turn_on := daylight < 0.55
-	for headlight in headlights:
-		if is_instance_valid(headlight):
-			headlight.visible = should_turn_on
