@@ -441,6 +441,19 @@ func _process(delta: float) -> void:
 				status_label.text = "House %d: %s. Interact to buy ($%d)." % [i + 1, "Owned" if owned_houses[i] else "For sale", HOUSE_PRICE]
 				return
 
+func _update_mission_objective(player_position: Vector3) -> void:
+	if not is_instance_valid(mission_label):
+		return
+	match mission_stage:
+		1:
+			var distance_to_pickup := Vector2(player_position.x - DELIVERY_PICKUP.x, player_position.z - DELIVERY_PICKUP.z).length()
+			mission_label.text = "DELIVERY  |  Collect parcel at village  |  %d m away" % roundi(distance_to_pickup)
+		2:
+			var distance_to_dropoff := Vector2(player_position.x - DELIVERY_DROPOFF.x, player_position.z - DELIVERY_DROPOFF.z).length()
+			mission_label.text = "DELIVERY  |  Drop parcel in city  |  %d m away  |  Reward: $%d" % [roundi(distance_to_dropoff), DELIVERY_REWARD]
+		_:
+			mission_label.text = "MISSION  |  Start a delivery to earn $%d" % DELIVERY_REWARD
+
 func _update_hud() -> void:
 	if is_instance_valid(money_label):
 		money_label.text = "Vpickup2  |  Money: $%d" % money
