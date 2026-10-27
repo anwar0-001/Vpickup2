@@ -157,6 +157,40 @@ func _create_world() -> void:
 	_create_distant_landscape()
 	_create_delivery_points()
 	_create_traffic()
+	_create_road_signs()
+
+func _create_road_signs() -> void:
+	# Simple roadside speed-limit signs help distinguish village and city driving.
+	var pole_material := _material(Color(0.20, 0.21, 0.22), 0.55, 0.35)
+	var sign_back := _material(Color(0.91, 0.92, 0.88), 0.62, 0.0)
+	var sign_red := _material(Color(0.78, 0.10, 0.08), 0.48, 0.0)
+	for sign_data in [
+		{"name": "VillageSpeedSign", "position": Vector3(-29.7, 0.0, -8.0), "limit": "30", "caption": "VILLAGE"},
+		{"name": "CitySpeedSign", "position": Vector3(18.5, 0.0, -10.0), "limit": "40", "caption": "CITY"}
+	]:
+		var sign_position: Vector3 = sign_data["position"]
+		_box(self, sign_data["name"] + "_Pole", Vector3(0.12, 2.35, 0.12), sign_position + Vector3(0, 1.18, 0), Color(0.24, 0.25, 0.26), false)
+		_box(self, sign_data["name"] + "_Board", Vector3(0.92, 0.92, 0.12), sign_position + Vector3(0, 2.35, 0), sign_back.albedo_color, false)
+		var border := _box(self, sign_data["name"] + "_RedBorder", Vector3(0.82, 0.82, 0.035), sign_position + Vector3(0, 2.35, -0.078), sign_red.albedo_color, false)
+		var face := _box(self, sign_data["name"] + "_Face", Vector3(0.70, 0.70, 0.04), sign_position + Vector3(0, 2.35, -0.102), Color(0.94, 0.94, 0.88), false)
+		var limit_label := Label3D.new()
+		limit_label.name = sign_data["name"] + "_Limit"
+		limit_label.text = str(sign_data["limit"])
+		limit_label.font_size = 64
+		limit_label.pixel_size = 0.012
+		limit_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		limit_label.modulate = Color(0.12, 0.13, 0.14)
+		limit_label.position = sign_position + Vector3(0, 2.35, -0.14)
+		add_child(limit_label)
+		var area_label := Label3D.new()
+		area_label.name = sign_data["name"] + "_Area"
+		area_label.text = str(sign_data["caption"])
+		area_label.font_size = 22
+		area_label.pixel_size = 0.01
+		area_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		area_label.modulate = Color(1.0, 0.92, 0.62)
+		area_label.position = sign_position + Vector3(0, 3.05, 0)
+		add_child(area_label)
 
 func _create_traffic() -> void:
 	# Two lanes of low-speed traffic make the city feel active without heavy AI.
