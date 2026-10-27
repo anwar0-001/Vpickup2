@@ -2,6 +2,7 @@ extends Node3D
 ## Vpickup2: original procedural driving/life-simulation prototype.
 
 const VehicleScript = preload("res://scripts/pickup_vehicle.gd")
+const TrafficCarScript = preload("res://scripts/traffic_car.gd")
 const SAVE_PATH := "user://vpickup2_save.cfg"
 const HOUSE_PRICE := 1200
 const FOOD_PRICE := 25
@@ -136,6 +137,27 @@ func _create_world() -> void:
 	_create_street_furniture()
 	_create_distant_landscape()
 	_create_delivery_points()
+	_create_traffic()
+
+func _create_traffic() -> void:
+	# Two lanes of low-speed traffic make the city feel active without heavy AI.
+	var traffic_specs := [
+		[22.0, -92.0, 1.0, 6.0],
+		[26.0, -66.0, -1.0, 5.2],
+		[22.0, -38.0, 1.0, 6.8],
+		[26.0, -15.0, -1.0, 5.6]
+	]
+	for i in range(traffic_specs.size()):
+		var spec: Array = traffic_specs[i]
+		var traffic_car: CharacterBody3D = TrafficCarScript.new()
+		traffic_car.name = "CityTraffic_%d" % (i + 1)
+		traffic_car.lane_x = float(spec[0])
+		traffic_car.travel_min_z = -101.0
+		traffic_car.travel_max_z = -9.0
+		traffic_car.initial_direction = float(spec[2])
+		traffic_car.travel_speed = float(spec[3])
+		traffic_car.position = Vector3(float(spec[0]), 0.8, float(spec[1]))
+		add_child(traffic_car)
 
 func _create_village() -> void:
 	for i in range(7):
