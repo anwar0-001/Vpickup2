@@ -36,6 +36,9 @@ interact={
 "events": [Object(InputEventKey,"physical_keycode":69)]
 }
 
+[autoload]
+SurfaceMaterials="*res://scripts/surface_materials.gd"
+
 [rendering]
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
