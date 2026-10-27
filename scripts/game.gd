@@ -142,6 +142,12 @@ func _create_world() -> void:
 		_box(self, "VillageRoadEdge_%s" % str(side), Vector3(0.09, 0.025, 105), Vector3(-24 + side * 3.15, 0.005, 22), Color(0.78, 0.78, 0.70), false)
 		_box(self, "CityRoadEdge_%s" % str(side), Vector3(0.09, 0.025, 90), Vector3(24 + side * 3.15, 0.06, -55), Color(0.78, 0.78, 0.70), false)
 	_box(self, "ConnectingRoadDash", Vector3(40, 0.025, 0.12), Vector3(0, 0.02, -23), Color(0.92, 0.83, 0.55), false)
+	# Low concrete curbs make the asphalt sit more naturally in the environment.
+	for side in [-1.0, 1.0]:
+		_box(self, "VillageCurb_%s" % str(side), Vector3(0.22, 0.16, 105), Vector3(-24 + side * 3.68, -0.035, 22), Color(0.47, 0.48, 0.45), false)
+		_box(self, "CityCurb_%s" % str(side), Vector3(0.22, 0.16, 90), Vector3(24 + side * 3.68, -0.015, -55), Color(0.48, 0.49, 0.47), false)
+	for side in [-1.0, 1.0]:
+		_box(self, "ConnectingCurb_%s" % str(side), Vector3(55, 0.16, 0.22), Vector3(side * 0.0, -0.02, -23 + side * 3.68), Color(0.48, 0.49, 0.47), false)
 	_label_3d("VILLAGE", Vector3(-40, 2, 62), Color(1, 0.94, 0.68))
 	_label_3d("CITY", Vector3(35, 2, -82), Color(0.72, 0.9, 1))
 	_create_village()
@@ -248,6 +254,11 @@ func _building(building_name: String, size: Vector3, pos: Vector3, wall_color: C
 	_box(self, building_name, size, pos, wall_color)
 	_box(self, building_name + "_Roof", Vector3(size.x * 1.12, 0.5, size.z * 1.12), pos + Vector3(0, size.y / 2.0 + 0.25, 0), roof_color, false)
 	_box(self, building_name + "_Door", Vector3(0.8, 1.7, 0.12), pos + Vector3(0, -size.y * 0.16, size.z / 2.0 + 0.07), Color(0.22,0.13,0.08), false)
+	# A darker plinth and a narrow facade band add depth to otherwise box-built walls.
+	_box(self, building_name + "_Foundation", Vector3(size.x + 0.08, 0.24, 0.10), pos + Vector3(0, -size.y / 2.0 + 0.18, size.z / 2.0 + 0.045), Color(0.38, 0.37, 0.33), false)
+	if building_name == "CarDealership" or building_name == "FoodMarket":
+		var awning_color := Color(0.13, 0.29, 0.42) if building_name == "CarDealership" else Color(0.78, 0.72, 0.43)
+		_box(self, building_name + "_EntranceAwning", Vector3(size.x * 0.72, 0.14, 1.0), pos + Vector3(0, 0.35, size.z / 2.0 + 0.48), awning_color, false)
 	if size.y > 4.5:
 		var glass_colors := [Color(0.24,0.48,0.62), Color(0.62,0.72,0.76), Color(0.86,0.68,0.38)]
 		for floor_index in range(maxi(1, int(size.y / 2.8))):
