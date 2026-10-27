@@ -131,16 +131,22 @@ func _build_vehicle() -> void:
 	add_child(collision)
 
 func _physics_process(delta: float) -> void:
-	var throttle := Input.get_action_strength("accelerate") - Input.get_action_strength("brake")
-	if throttle > 0.0:
+	var accelerate_input := Input.get_action_strength("accelerate")
+	var brake_input := Input.get_action_strength("brake")
+	if accelerate_input > 0.0:
 		speed = move_toward(speed, MAX_SPEED, ACCELERATION * delta)
-	elif throttle < 0.0:
-		speed = move_toward(speed, -REVERSE_SPEED, ACCELERATION * delta)
+	elif brake_input > 0.0:
+		if speed > 0.15:
+			# Braking slows a moving pickup before allowing reverse.
+			speed = move_toward(speed, 0.0, 26.0 * delta)
+		else:
+			speed = move_toward(speed, -REVERSE_SPEED, ACCELERATION * 0.7 * delta)
 	else:
 		speed = move_toward(speed, 0.0, FRICTION * delta)
 	var steer := Input.get_action_strength("steer_right") - Input.get_action_strength("steer_left")
-	if abs(speed) > 0.5:
-		rotation.y -= steer * TURN_RATE * delta * sign(speed)
+	var steering_factor := clampf(abs(speed) / MAX_SPEED, 0.18, 1.0)
+	if abs(speed) > 0.35:
+		rotation.y -= steer * TURN_RATE * steering_factor * delta * sign(speed)
 	var forward := -global_transform.basis.z
 	velocity.x = forward.x * speed
 	velocity.z = forward.z * speed
@@ -149,6 +155,18 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = -0.5
 	move_and_slide()
+
+func _process(_delta: float) -> void:
+	var controller := get_tree().get_first_node_in_group("day_night_controller")
+	if controller == null:
+		return
+	var game_seconds := float(controller.get("game_time_seconds"))
+	var hour := game_seconds / 3600.0
+	var daylight := clampf(sin((hour - 6.0) * PI / 12.0), 0.0, 1.0)
+	var should_turn_on := daylight < 0.25
+	for headlight in headlights:
+		if is_instance_valid(headlight):
+			headlight.visible = should_turn_on
 
 func _process(_delta: float) -> void:
 	var controller := get_tree().get_first_node_in_group("day_night_controller")
