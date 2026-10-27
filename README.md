@@ -11,7 +11,9 @@ Vpickup2 is an independent 3D driving and life-simulation game for Android, made
 - A player-driven pickup with arcade acceleration, braking, reverse and steering.
 - Touch buttons for left/right steering, acceleration and braking, plus an interact button.
 - A car dealership, food shop and six houses for sale.
-- A work button that pays $150, food purchase interaction, house purchasing, and an infinite-money toggle.
+- A delivery mission loop: start a job, collect a parcel at the village marker, deliver it to the city marker, and earn $350.
+- Visible pickup/drop-off markers, a parcel displayed in the pickup bed, and saved mission progress.
+- Food purchase interaction, house purchasing, and an infinite-money toggle.
 - Local save file for money, infinite-money setting and house ownership.
 - Android export preset and GitHub Actions workflow intended to build a debug APK.
 

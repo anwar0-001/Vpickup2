@@ -6,6 +6,9 @@ const SAVE_PATH := "user://vpickup2_save.cfg"
 const HOUSE_PRICE := 1200
 const FOOD_PRICE := 25
 const CAR_PRICE := 2500
+const DELIVERY_REWARD := 350
+const DELIVERY_PICKUP := Vector3(-24, 0.0, -15)
+const DELIVERY_DROPOFF := Vector3(24, 0.0, -86)
 
 var money: int = 500
 var infinite_money := true
@@ -21,6 +24,10 @@ var action_button: Button
 var infinite_button: Button
 var world_environment: WorldEnvironment
 var touch_actions: Array[String] = ["steer_left", "steer_right", "accelerate", "brake"]
+var mission_stage: int = 0 # 0 = available, 1 = collect parcel, 2 = deliver parcel
+var pickup_marker: Node3D
+var dropoff_marker: Node3D
+var package_visual: MeshInstance3D
 
 func _ready() -> void:
 	_load_game()
@@ -128,6 +135,7 @@ func _create_world() -> void:
 	_create_shops()
 	_create_street_furniture()
 	_create_distant_landscape()
+	_create_delivery_points()
 
 func _create_village() -> void:
 	for i in range(7):
@@ -229,6 +237,8 @@ func _create_player() -> void:
 	vehicle.rotation = saved_vehicle_rotation
 	add_child(vehicle)
 	_attach_camera(vehicle)
+	if mission_stage == 2:
+		_attach_delivery_package()
 
 func _attach_camera(target_vehicle: Node3D) -> void:
 	var camera := Camera3D.new()
@@ -282,7 +292,7 @@ func _create_ui() -> void:
 	var controls := HBoxContainer.new()
 	vbox.add_child(controls)
 	var earn_button := Button.new()
-	earn_button.text = "Work +$150"
+	earn_button.text = "Delivery +$%d" % DELIVERY_REWARD
 	earn_button.pressed.connect(_do_work)
 	controls.add_child(earn_button)
 	infinite_button = Button.new()
@@ -353,8 +363,16 @@ func _process(_delta: float) -> void:
 	var p := vehicle.global_position
 	var dealer_distance := Vector2(p.x - 42, p.z + 48).length()
 	var food_distance := Vector2(p.x - 7, p.z + 48).length()
+	var pickup_distance := Vector2(p.x - DELIVERY_PICKUP.x, p.z - DELIVERY_PICKUP.z).length()
+	var dropoff_distance := Vector2(p.x - DELIVERY_DROPOFF.x, p.z - DELIVERY_DROPOFF.z).length()
 	current_nearby_action = ""
-	if dealer_distance < 10:
+	if mission_stage == 1 and pickup_distance < 8.0:
+		current_nearby_action = "mission_pickup"
+		status_label.text = "Parcel pickup: stop nearby and press Interact."
+	elif mission_stage == 2 and dropoff_distance < 8.0:
+		current_nearby_action = "mission_dropoff"
+		status_label.text = "Delivery destination: stop nearby and press Interact. Reward: $%d." % DELIVERY_REWARD
+	elif dealer_distance < 10:
 		current_nearby_action = "dealer"
 		status_label.text = "Car dealership: interact to buy a pickup ($%d)." % CAR_PRICE
 	elif food_distance < 9:
@@ -385,9 +403,12 @@ func _pay(amount: int) -> void:
 	_save_game()
 
 func _do_work() -> void:
-	money += 150
-	status_label.text = "Work completed! You earned $150."
-	_update_hud()
+	if mission_stage != 0:
+		status_label.text = "Finish your current delivery before starting another one."
+		return
+	mission_stage = 1
+	status_label.text = "Delivery accepted! Collect the parcel at the yellow marker in the village."
+	_update_delivery_markers()
 	_save_game()
 
 func _toggle_infinite_money() -> void:
@@ -398,6 +419,26 @@ func _toggle_infinite_money() -> void:
 
 func _interact() -> void:
 	match current_nearby_action:
+		"mission_pickup":
+			if mission_stage != 1:
+				return
+			mission_stage = 2
+			_attach_delivery_package()
+			_update_delivery_markers()
+			status_label.text = "Parcel collected! Deliver it to the blue marker in the city for $%d." % DELIVERY_REWARD
+			_save_game()
+		"mission_dropoff":
+			if mission_stage != 2:
+				return
+			mission_stage = 0
+			money += DELIVERY_REWARD
+			if is_instance_valid(package_visual):
+				package_visual.queue_free()
+				package_visual = null
+			_update_delivery_markers()
+			_update_hud()
+			status_label.text = "Delivery completed! You earned $%d." % DELIVERY_REWARD
+			_save_game()
 		"dealer":
 			if not _can_pay(CAR_PRICE):
 				status_label.text = "Not enough money. Complete work to earn more."
@@ -410,6 +451,11 @@ func _interact() -> void:
 			add_child(new_vehicle)
 			vehicle = new_vehicle
 			_attach_camera(vehicle)
+			if mission_stage == 2:
+				if is_instance_valid(package_visual):
+					package_visual.queue_free()
+					package_visual = null
+				_attach_delivery_package()
 			if is_instance_valid(old_vehicle):
 				old_vehicle.queue_free()
 			current_nearby_action = ""
@@ -440,6 +486,7 @@ func _save_game() -> void:
 	save.set_value("player", "money", money)
 	save.set_value("player", "infinite_money", infinite_money)
 	save.set_value("player", "owned_houses", owned_houses)
+	save.set_value("missions", "delivery_stage", mission_stage)
 	if is_instance_valid(vehicle) and vehicle.is_inside_tree():
 		save.set_value("player", "vehicle_position", vehicle.global_position)
 		save.set_value("player", "vehicle_rotation", vehicle.global_rotation)
@@ -450,6 +497,7 @@ func _load_game() -> void:
 	if save.load(SAVE_PATH) != OK:
 		return
 	money = int(save.get_value("player", "money", money))
+	mission_stage = clampi(int(save.get_value("missions", "delivery_stage", 0)), 0, 2)
 	infinite_money = bool(save.get_value("player", "infinite_money", infinite_money))
 	var saved_position = save.get_value("player", "vehicle_position", saved_vehicle_position)
 	var saved_rotation = save.get_value("player", "vehicle_rotation", saved_vehicle_rotation)
@@ -462,6 +510,69 @@ func _load_game() -> void:
 		owned_houses.assign(saved_houses)
 
  
+func _create_delivery_points() -> void:
+	pickup_marker = _make_delivery_marker("ParcelPickupMarker", DELIVERY_PICKUP, Color(1.0, 0.72, 0.12), "PARCEL PICKUP")
+	dropoff_marker = _make_delivery_marker("ParcelDropoffMarker", DELIVERY_DROPOFF, Color(0.18, 0.68, 1.0), "DELIVERY")
+	_update_delivery_markers()
+
+func _make_delivery_marker(marker_name: String, marker_position: Vector3, marker_color: Color, marker_text: String) -> Node3D:
+	var marker := Node3D.new()
+	marker.name = marker_name
+	marker.position = marker_position
+	add_child(marker)
+	var beacon := MeshInstance3D.new()
+	beacon.name = "Beacon"
+	var beacon_mesh := CylinderMesh.new()
+	beacon_mesh.top_radius = 0.32
+	beacon_mesh.bottom_radius = 0.55
+	beacon_mesh.height = 1.8
+	beacon.mesh = beacon_mesh
+	beacon.position = Vector3(0, 1.0, 0)
+	var beacon_material := _material(marker_color, 0.25, 0.1)
+	beacon_material.emission_enabled = true
+	beacon_material.emission = marker_color
+	beacon_material.emission_energy_multiplier = 1.3
+	beacon.material_override = beacon_material
+	marker.add_child(beacon)
+	var ring := MeshInstance3D.new()
+	ring.name = "GroundRing"
+	var ring_mesh := CylinderMesh.new()
+	ring_mesh.top_radius = 1.35
+	ring_mesh.bottom_radius = 1.35
+	ring_mesh.height = 0.06
+	ring.mesh = ring_mesh
+	ring.position.y = 0.08
+	ring.material_override = _material(marker_color, 0.35, 0.0)
+	marker.add_child(ring)
+	var label := Label3D.new()
+	label.name = "MarkerLabel"
+	label.text = marker_text
+	label.font_size = 32
+	label.pixel_size = 0.01
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.modulate = marker_color
+	label.position = Vector3(0, 2.4, 0)
+	marker.add_child(label)
+	return marker
+
+func _update_delivery_markers() -> void:
+	if is_instance_valid(pickup_marker):
+		pickup_marker.visible = mission_stage != 2
+	if is_instance_valid(dropoff_marker):
+		dropoff_marker.visible = mission_stage == 2
+
+func _attach_delivery_package() -> void:
+	if not is_instance_valid(vehicle) or is_instance_valid(package_visual):
+		return
+	var package_mesh := BoxMesh.new()
+	package_mesh.size = Vector3(0.72, 0.52, 0.62)
+	package_visual = MeshInstance3D.new()
+	package_visual.name = "DeliveryParcel"
+	package_visual.mesh = package_mesh
+	package_visual.position = Vector3(0, 1.42, 1.12)
+	package_visual.material_override = _material(Color(0.68, 0.43, 0.20), 0.9)
+	vehicle.add_child(package_visual)
+
 func _create_street_furniture() -> void:
 	var pole_mat := _material(Color(0.18, 0.20, 0.22), 0.55, 0.35)
 	var curb_mat := _material(Color(0.56, 0.57, 0.54), 0.9)
