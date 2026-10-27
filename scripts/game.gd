@@ -452,6 +452,9 @@ func _interact() -> void:
 			vehicle = new_vehicle
 			_attach_camera(vehicle)
 			if mission_stage == 2:
+				if is_instance_valid(package_visual):
+					package_visual.queue_free()
+					package_visual = null
 				_attach_delivery_package()
 			if is_instance_valid(old_vehicle):
 				old_vehicle.queue_free()
