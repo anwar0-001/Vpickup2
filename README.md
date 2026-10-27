@@ -35,7 +35,7 @@ Vpickup2 is an independent 3D driving and life-simulation game for Android, made
 The workflow at .github/workflows/android.yml runs on pushes to main that change game files and can also be started manually from Actions > Build Vpickup2 Android APK > Run workflow. If the workflow succeeds, download the Vpickup2-Android-APK artifact from that run.
 
 ## Important status
-The repository is source code, not a guarantee that a build has passed. The first successful GitHub Actions run is required to verify the export environment and catch engine/parser issues. The game is still an early prototype: its world uses primitive shapes, the vehicle physics and collisions are basic, and interiors, pedestrians, advanced traffic navigation, vehicle headlights, audio, polished models and release signing remain future development work. Do not distribute a release build until it has been tested on real devices.
+The repository is source code, not a guarantee that a build has passed. The first successful GitHub Actions run is required to verify the export environment and catch engine/parser issues. The game is still an early prototype: its world uses primitive shapes, the vehicle physics and collisions are basic, and interiors, pedestrians, advanced traffic navigation, audio, polished models and release signing remain future development work. Do not distribute a release build until it has been tested on real devices.
 
 ## Intellectual property
 All current scene geometry is generated from simple built-in Godot meshes. Use only original or properly licensed assets when expanding the game.
