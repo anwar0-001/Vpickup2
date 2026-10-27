@@ -194,8 +194,22 @@ func _create_village() -> void:
 		crown_mesh.height = 3.8
 		crown.mesh = crown_mesh
 		crown.position = Vector3(x, 3.6, z)
-		crown.material_override = _material(Color(0.12 + float(i % 3) * 0.025, 0.30 + float(i % 4) * 0.025, 0.11), 0.95)
+		var foliage_color := Color(0.12 + float(i % 3) * 0.025, 0.30 + float(i % 4) * 0.025, 0.11)
+		crown.material_override = _material(foliage_color, 0.95)
 		add_child(crown)
+		# Three overlapping foliage clusters break up the single-sphere silhouette.
+		var foliage_offsets := [Vector3(-1.0, -0.25, 0.35), Vector3(0.9, 0.05, 0.2), Vector3(0.0, 0.5, -0.85)]
+		for cluster_index in range(foliage_offsets.size()):
+			var cluster := MeshInstance3D.new()
+			cluster.name = "TreeFoliage_%d_%d" % [i, cluster_index]
+			var cluster_mesh := SphereMesh.new()
+			cluster_mesh.radius = 1.18
+			cluster_mesh.height = 2.55
+			cluster.mesh = cluster_mesh
+			cluster.position = Vector3(x, 3.6, z) + foliage_offsets[cluster_index]
+			var shade := 0.94 + float((i + cluster_index) % 3) * 0.06
+			cluster.material_override = _material(Color(foliage_color.r * shade, foliage_color.g * shade, foliage_color.b * shade), 0.98)
+			add_child(cluster)
 
 func _create_city() -> void:
 	for i in range(5):
