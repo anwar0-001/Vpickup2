@@ -156,7 +156,7 @@ func _create_traffic() -> void:
 		traffic_car.travel_max_z = -9.0
 		traffic_car.initial_direction = float(spec[2])
 		traffic_car.travel_speed = float(spec[3])
-		traffic_car.position = Vector3(float(spec[0]), 0.8, float(spec[1]))
+		traffic_car.position = Vector3(float(spec[0]), 0.0, float(spec[1]))
 		add_child(traffic_car)
 
 func _create_village() -> void:
