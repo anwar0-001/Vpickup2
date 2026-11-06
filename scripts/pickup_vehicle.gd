@@ -7,6 +7,8 @@ const REVERSE_SPEED := 10.0
 const FRICTION := 9.0
 const TURN_RATE := 1.55
 var speed := 0.0
+var yaw_rate := 0.0
+var lateral_velocity := 0.0
 var headlights: Array[SpotLight3D] = []
 var brake_lamps: Array[MeshInstance3D] = []
 var brake_lamp_material: StandardMaterial3D
@@ -277,9 +279,14 @@ func _physics_process(delta: float) -> void:
 	else:
 		speed = move_toward(speed, 0.0, FRICTION * delta)
 	var steer := Input.get_action_strength("steer_right") - Input.get_action_strength("steer_left")
-	var steering_factor := clampf(abs(speed) / MAX_SPEED, 0.18, 1.0)
-	if abs(speed) > 0.35:
-		rotation.y -= steer * TURN_RATE * steering_factor * delta * sign(speed)
+	var steering_factor := clampf(abs(speed) / MAX_SPEED, 0.12, 1.0)
+	var target_yaw_rate := -steer * TURN_RATE * steering_factor * sign(speed) if absf(speed) > 0.35 else 0.0
+	# A heavier pickup builds and releases yaw momentum instead of snapping instantly.
+	yaw_rate = move_toward(yaw_rate, target_yaw_rate, 2.8 * delta)
+	rotation.y += yaw_rate * delta
+	# Lateral inertia creates a small, speed-dependent slip that tyre grip gradually removes.
+	var target_lateral_velocity := steer * absf(speed) * 0.075 if absf(speed) > 1.0 else 0.0
+	lateral_velocity = move_toward(lateral_velocity, target_lateral_velocity, 5.5 * delta)
 	wheel_spin += speed * delta / 0.405
 	for wheel_pivot in wheel_pivots:
 		if is_instance_valid(wheel_pivot):
@@ -319,8 +326,9 @@ func _physics_process(delta: float) -> void:
 		vehicle_visual_root.rotation.x = lerpf(vehicle_visual_root.rotation.x, target_pitch, suspension_blend)
 		vehicle_visual_root.rotation.z = lerpf(vehicle_visual_root.rotation.z, target_roll, suspension_blend)
 	var forward := -global_transform.basis.z
-	velocity.x = forward.x * speed
-	velocity.z = forward.z * speed
+	var right := global_transform.basis.x
+	velocity.x = forward.x * speed + right.x * lateral_velocity
+	velocity.z = forward.z * speed + right.z * lateral_velocity
 	if not is_on_floor():
 		velocity.y -= 22.0 * delta
 	else:
@@ -360,3 +368,5 @@ func _process(_delta: float) -> void:
 # Keep complete wheel assembly animation covered by the Android pull-request build.
 
 # Independent spring-damper wheel travel for the visual suspension pass.
+
+# Weight-balance handling: yaw inertia and tyre-grip lateral settling.
