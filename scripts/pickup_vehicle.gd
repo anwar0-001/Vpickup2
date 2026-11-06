@@ -297,8 +297,8 @@ func _physics_process(delta: float) -> void:
 		var wheel_pivot := wheel_pivots[wheel_index]
 		if not is_instance_valid(wheel_pivot):
 			continue
-		var is_front := wheel_index < 2
-		var is_left := wheel_index % 2 == 0
+		var is_front := wheel_index % 2 == 0
+		var is_left := wheel_index < 2
 		var target_offset := -longitudinal_load if is_front else longitudinal_load
 		target_offset += lateral_load if is_left else -lateral_load
 		target_offset = clampf(target_offset, -0.045, 0.065)
