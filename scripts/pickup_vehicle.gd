@@ -10,6 +10,8 @@ var speed := 0.0
 var yaw_rate := 0.0
 var lateral_velocity := 0.0
 var handbrake_active := false
+var current_gear := 1
+const GEAR_SPEED_LIMITS := [8.0, 14.0, 21.0, MAX_SPEED]
 var headlights: Array[SpotLight3D] = []
 var brake_lamps: Array[MeshInstance3D] = []
 var brake_lamp_material: StandardMaterial3D
@@ -262,6 +264,7 @@ func _physics_process(delta: float) -> void:
 	var accelerate_input := Input.get_action_strength("accelerate")
 	var brake_input := Input.get_action_strength("brake")
 	var handbrake_input := Input.get_action_strength("handbrake")
+	var reverse_input := Input.get_action_strength("reverse")
 	handbrake_active = handbrake_input > 0.05
 	# Tail lamps brighten while braking or reversing, then return to a dim running-light glow.
 	for reverse_lamp_node in reverse_lamps:
@@ -274,16 +277,36 @@ func _physics_process(delta: float) -> void:
 	if handbrake_active:
 		# Handbrake strongly slows the pickup but never engages reverse.
 		speed = move_toward(speed, 0.0, 15.0 * delta)
-	elif accelerate_input > 0.0:
-		speed = move_toward(speed, MAX_SPEED, ACCELERATION * delta)
-	elif brake_input > 0.0:
+	elif reverse_input > 0.05:
+		# Reverse is a separate deliberate input and is only available near a stop.
 		if speed > 0.15:
-			# Service braking slows a moving pickup before allowing reverse.
 			speed = move_toward(speed, 0.0, 26.0 * delta)
 		else:
-			speed = move_toward(speed, -REVERSE_SPEED, ACCELERATION * 0.7 * delta)
+			current_gear = 0
+			speed = move_toward(speed, -REVERSE_SPEED, ACCELERATION * 0.55 * delta)
+	elif accelerate_input > 0.0:
+		if speed < -0.15:
+			speed = move_toward(speed, 0.0, 26.0 * delta)
+		else:
+			if current_gear == 0:
+				current_gear = 1
+			var gear_limit: float = GEAR_SPEED_LIMITS[current_gear - 1]
+			speed = move_toward(speed, gear_limit, ACCELERATION * (1.0 - float(current_gear - 1) * 0.12) * delta)
 	else:
-		speed = move_toward(speed, 0.0, FRICTION * delta)
+		if brake_input > 0.05:
+			speed = move_toward(speed, 0.0, 26.0 * delta)
+		else:
+			speed = move_toward(speed, 0.0, FRICTION * delta)
+	# Automatic four-speed gearbox with hysteresis to prevent rapid gear hunting.
+	if speed >= 0.0 and current_gear > 0:
+		if current_gear < GEAR_SPEED_LIMITS.size() and speed >= GEAR_SPEED_LIMITS[current_gear - 1] * 0.94:
+			current_gear += 1
+		elif current_gear > 1 and speed < GEAR_SPEED_LIMITS[current_gear - 2] * 0.68:
+			current_gear -= 1
+	elif speed < -0.5:
+		current_gear = 0
+	elif absf(speed) <= 0.5 and reverse_input <= 0.05:
+		current_gear = 1
 	var steer := Input.get_action_strength("steer_right") - Input.get_action_strength("steer_left")
 	var steering_factor := clampf(abs(speed) / MAX_SPEED, 0.12, 1.0)
 	var target_yaw_rate := -steer * TURN_RATE * steering_factor * sign(speed) if absf(speed) > 0.35 else 0.0
