@@ -17,13 +17,31 @@ float hash_cell(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
 }
 
+float value_noise(vec2 p) {
+    vec2 cell = floor(p);
+    vec2 local = fract(p);
+    local = local * local * (3.0 - 2.0 * local);
+    float a = hash_cell(cell);
+    float b = hash_cell(cell + vec2(1.0, 0.0));
+    float c = hash_cell(cell + vec2(0.0, 1.0));
+    float d = hash_cell(cell + vec2(1.0, 1.0));
+    return mix(mix(a, b, local.x), mix(c, d, local.x), local.y);
+}
+
 void fragment() {
     vec2 world_xz = VERTEX.xz;
-    float broad = hash_cell(floor(world_xz * grain_scale));
-    float fine = hash_cell(floor(world_xz * grain_scale * 7.0));
-    float shade = 1.0 + (broad - 0.5) * variation + (fine - 0.5) * variation * 0.34;
+    // Layer broad natural colour drift with finer grain instead of visible square noise.
+    float broad = value_noise(world_xz * grain_scale * 0.16);
+    float medium = value_noise(world_xz * grain_scale * 1.4);
+    float fine = hash_cell(floor(world_xz * grain_scale * 11.0));
+    float micro = value_noise(world_xz * grain_scale * 24.0);
+    float shade = 1.0
+        + (broad - 0.5) * variation
+        + (medium - 0.5) * variation * 0.50
+        + (fine - 0.5) * variation * 0.18
+        + (micro - 0.5) * variation * 0.08;
     ALBEDO = clamp(base_color.rgb * shade, vec3(0.0), vec3(1.0));
-    ROUGHNESS = surface_roughness;
+    ROUGHNESS = clamp(surface_roughness + (fine - 0.5) * 0.035, 0.0, 1.0);
 }
 """
 
