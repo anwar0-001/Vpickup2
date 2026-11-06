@@ -670,6 +670,7 @@ func _create_ui() -> void:
 	_make_hold_button(layer, "▶", "steer_right", Vector2(92, -142), Vector2(66, 62), false)
 	_make_hold_button(layer, "▲", "accelerate", Vector2(-166, -214), Vector2(68, 62), true)
 	_make_hold_button(layer, "▼", "brake", Vector2(-92, -142), Vector2(68, 62), true)
+	_make_hold_button(layer, "HB", "handbrake", Vector2(-166, -142), Vector2(68, 62), true)
 	var help := Label.new()
 	help.text = "WASD / arrows or touch controls"
 	help.position = Vector2(18, 126)
