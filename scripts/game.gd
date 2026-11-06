@@ -86,6 +86,16 @@ func _create_environment() -> void:
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_BG
 	env.tonemap_exposure = 1.05
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	# First realistic-lighting pass: subtle contact shading improves depth around
+	# buildings, trees, vehicle parts and roadside props without changing the
+	# Compatibility renderer required by the Android target.
+	env.ssao_enabled = true
+	env.ssao_radius = 1.35
+	env.ssao_intensity = 1.05
+	env.ssao_power = 1.25
+	env.ssao_detail = 0.5
+	env.ssao_horizon = 0.06
+	env.ssao_direct_light_affect = 0.0
 	world_environment.environment = env
 	add_child(world_environment)
 
