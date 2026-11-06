@@ -40,6 +40,9 @@ var mission_stage: int = 0 # 0 = available, 1 = collect parcel, 2 = deliver parc
 var pickup_marker: Node3D
 var dropoff_marker: Node3D
 var package_visual: MeshInstance3D
+var rain_particles: CPUParticles3D
+var rain_button: Button
+var is_raining := false
 
 func _ready() -> void:
 	_load_game()
@@ -443,6 +446,47 @@ func _attach_camera(target_vehicle: Node3D) -> void:
 	camera.fov = 75.0
 	target_vehicle.add_child(camera)
 	camera.current = true
+	_create_rain_effect(camera)
+
+func _create_rain_effect(camera: Camera3D) -> void:
+	rain_particles = CPUParticles3D.new()
+	rain_particles.name = "RainParticles"
+	rain_particles.amount = 180
+	rain_particles.lifetime = 1.15
+	rain_particles.emitting = is_raining
+	rain_particles.local_coords = true
+	rain_particles.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	rain_particles.emission_box_extents = Vector3(13.0, 7.0, 12.0)
+	rain_particles.direction = Vector3(0.0, -1.0, 0.0)
+	rain_particles.spread = 5.0
+	rain_particles.gravity = Vector3(0.0, -1.5, 0.0)
+	rain_particles.initial_velocity_min = 17.0
+	rain_particles.initial_velocity_max = 22.0
+	rain_particles.scale_amount_min = 0.8
+	rain_particles.scale_amount_max = 1.2
+	rain_particles.position = Vector3(0.0, 1.0, -5.0)
+	var rain_mesh := QuadMesh.new()
+	rain_mesh.size = Vector2(0.025, 0.42)
+	var rain_material := StandardMaterial3D.new()
+	rain_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	rain_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	rain_material.albedo_color = Color(0.68, 0.80, 0.96, 0.58)
+	rain_material.roughness = 0.25
+	rain_mesh.material = rain_material
+	rain_particles.mesh = rain_mesh
+	camera.add_child(rain_particles)
+
+func _toggle_rain() -> void:
+	is_raining = not is_raining
+	if is_instance_valid(rain_particles):
+		rain_particles.emitting = is_raining
+	if is_instance_valid(rain_button):
+		rain_button.text = "Rain: ON" if is_raining else "Rain: OFF"
+	if is_instance_valid(status_label):
+		status_label.text = "Rain started." if is_raining else "Rain stopped."
+	if is_instance_valid(world_environment) and world_environment.environment != null:
+		world_environment.environment.fog_density = 0.0028 if is_raining else 0.0015
+	_save_game()
 
 func _create_ui() -> void:
 	var layer := CanvasLayer.new()
@@ -578,6 +622,12 @@ func _create_pause_menu(layer: CanvasLayer) -> void:
 	resume_button.custom_minimum_size.y = 52
 	resume_button.pressed.connect(_resume_game)
 	menu_items.add_child(resume_button)
+	rain_button = Button.new()
+	rain_button.name = "RainToggle"
+	rain_button.text = "Rain: ON" if is_raining else "Rain: OFF"
+	rain_button.custom_minimum_size.y = 52
+	rain_button.pressed.connect(_toggle_rain)
+	menu_items.add_child(rain_button)
 	var save_button := Button.new()
 	save_button.text = "حفظ التقدم الآن"
 	save_button.custom_minimum_size.y = 52
@@ -818,6 +868,7 @@ func _save_game() -> void:
 	save.set_value("player", "owned_houses", owned_houses)
 	save.set_value("missions", "delivery_stage", mission_stage)
 	save.set_value("world", "time_seconds", game_time_seconds)
+	save.set_value("world", "is_raining", is_raining)
 	if is_instance_valid(vehicle) and vehicle.is_inside_tree():
 		save.set_value("player", "vehicle_position", vehicle.global_position)
 		save.set_value("player", "vehicle_rotation", vehicle.global_rotation)
@@ -830,6 +881,7 @@ func _load_game() -> void:
 	money = int(save.get_value("player", "money", money))
 	mission_stage = clampi(int(save.get_value("missions", "delivery_stage", 0)), 0, 2)
 	game_time_seconds = float(save.get_value("world", "time_seconds", game_time_seconds))
+	is_raining = bool(save.get_value("world", "is_raining", is_raining))
 	infinite_money = bool(save.get_value("player", "infinite_money", infinite_money))
 	var saved_position = save.get_value("player", "vehicle_position", saved_vehicle_position)
 	var saved_rotation = save.get_value("player", "vehicle_rotation", saved_vehicle_rotation)
