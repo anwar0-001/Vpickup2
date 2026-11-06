@@ -99,10 +99,21 @@ func _build_vehicle() -> void:
 	_add_box("Chassis", Vector3(1.72, 0.24, 3.75), Vector3(0, 0.47, 0), black)
 	_add_box("LowerBody", Vector3(2.02, 0.52, 3.7), Vector3(0, 0.72, 0.02), paint, true)
 	_add_box("FrontBonnet", Vector3(1.82, 0.30, 1.03), Vector3(0, 1.00, -1.12), paint, true)
+	for vent_index in range(3):
+		_add_box("BonnetVent_%d" % vent_index, Vector3(0.34, 0.025, 0.055), Vector3(0, 1.16, -1.42 + float(vent_index) * 0.15), paint_dark)
 	_add_box("Cabin", Vector3(1.66, 0.82, 1.48), Vector3(0, 1.27, -0.36), paint, true)
 	_add_box("Roof", Vector3(1.72, 0.14, 1.55), Vector3(0, 1.73, -0.34), paint_dark, true)
+	_add_box("RoofAntennaBase", Vector3(0.12, 0.045, 0.12), Vector3(0.62, 1.82, 0.18), black)
+	var roof_antenna := _add_box("RoofAntenna", Vector3(0.025, 0.34, 0.025), Vector3(0.62, 1.99, 0.18), black)
+	roof_antenna.rotation.z = -0.16
 	_add_box("FrontWindshield", Vector3(1.40, 0.48, 0.055), Vector3(0, 1.37, -1.105), glass)
 	_add_box("RearWindow", Vector3(1.30, 0.38, 0.055), Vector3(0, 1.37, 0.39), glass)
+	# Slim black wiper arms sit just above the lower windshield edge.
+	for wiper_index in range(2):
+		var wiper_x := -0.30 if wiper_index == 0 else 0.30
+		var wiper := _add_box("WindshieldWiper_%d" % wiper_index, Vector3(0.58, 0.025, 0.035), Vector3(wiper_x, 1.145, -1.145), black)
+		wiper.rotation.z = -0.12 if wiper_index == 0 else 0.12
+		_add_cylinder("WiperPivot_%d" % wiper_index, 0.035, 0.045, Vector3(wiper_x * 1.7, 1.15, -1.14), chrome, 90.0)
 	for side in [-1.0, 1.0]:
 		_add_box("SideWindow_%s" % str(side), Vector3(0.045, 0.43, 0.82), Vector3(side * 0.84, 1.39, -0.36), glass)
 		_add_box("DoorHandle_%s" % str(side), Vector3(0.035, 0.06, 0.20), Vector3(side * 1.025, 1.00, -0.32), chrome)
@@ -115,6 +126,12 @@ func _build_vehicle() -> void:
 	_add_box("BedRightWall", Vector3(0.12, 0.35, 1.30), Vector3(0.77, 1.20, 1.18), paint)
 	_add_box("BedFrontWall", Vector3(1.48, 0.34, 0.10), Vector3(0, 1.20, 0.54), paint)
 	_add_box("Tailgate", Vector3(1.50, 0.34, 0.10), Vector3(0, 1.20, 1.82), paint)
+	_add_box("TailgateHandle", Vector3(0.30, 0.055, 0.035), Vector3(0, 1.28, 1.89), chrome)
+	# Four compact tie-down points make the cargo bed feel usable.
+	for tie_index in range(4):
+		var tie_x := -0.66 if tie_index % 2 == 0 else 0.66
+		var tie_z := 0.72 if tie_index < 2 else 1.62
+		_add_box("CargoTieDown_%d" % tie_index, Vector3(0.12, 0.045, 0.09), Vector3(tie_x, 1.39, tie_z), chrome)
 	_add_box("FrontGrille", Vector3(0.74, 0.22, 0.055), Vector3(0, 0.82, -1.91), black)
 	for grille_line in range(5):
 		_add_box("GrilleChrome_%d" % grille_line, Vector3(0.64, 0.018, 0.025), Vector3(0, 0.75 + float(grille_line) * 0.035, -1.95), chrome)
