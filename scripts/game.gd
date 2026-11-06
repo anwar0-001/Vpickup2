@@ -491,6 +491,7 @@ func _create_rain_effect(camera: Camera3D) -> void:
 
 func _toggle_rain() -> void:
 	is_raining = not is_raining
+	SurfaceMaterials.set_rain_wetness(is_raining)
 	if is_instance_valid(rain_particles):
 		rain_particles.emitting = is_raining
 	if is_instance_valid(rain_button):
@@ -499,6 +500,7 @@ func _toggle_rain() -> void:
 		status_label.text = "Rain started." if is_raining else "Rain stopped."
 	if is_instance_valid(world_environment) and world_environment.environment != null:
 		world_environment.environment.fog_density = 0.0028 if is_raining else 0.0015
+		world_environment.environment.fog_light_color = Color(0.48, 0.56, 0.64) if is_raining else Color(0.58, 0.68, 0.76)
 	_save_game()
 
 func _toggle_graphics_quality() -> void:
