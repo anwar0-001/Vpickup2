@@ -12,8 +12,8 @@ var brake_lamps: Array[MeshInstance3D] = []
 var brake_lamp_material: StandardMaterial3D
 var turn_signal_lamps: Array[MeshInstance3D] = []
 var reverse_lamps: Array[MeshInstance3D] = []
-var wheel_tires: Array[MeshInstance3D] = []
-var front_wheel_tires: Array[MeshInstance3D] = []
+var wheel_pivots: Array[Node3D] = []
+var front_wheel_pivots: Array[Node3D] = []
 var steering_wheel: MeshInstance3D
 var wheel_spin := 0.0
 var vehicle_visual_root: Node3D
@@ -36,7 +36,7 @@ func _mat(color: Color, roughness := 0.68, metallic := 0.0) -> StandardMaterial3
 	material.metallic = metallic
 	return material
 
-func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material, bevel := false) -> MeshInstance3D:
+func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material, bevel := false, parent: Node3D = null) -> MeshInstance3D:
 	var node := MeshInstance3D.new()
 	node.name = node_name
 	var mesh := BoxMesh.new()
@@ -45,12 +45,15 @@ func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material
 		mesh.subdivide_width = 2
 		mesh.subdivide_depth = 2
 	node.mesh = mesh
-	node.position = pos - Vector3(0.0, VISUAL_PIVOT_HEIGHT, 0.0)
+	node.position = pos if parent != null else pos - Vector3(0.0, VISUAL_PIVOT_HEIGHT, 0.0)
 	node.material_override = material
-	vehicle_visual_root.add_child(node)
+	if parent != null:
+		parent.add_child(node)
+	else:
+		vehicle_visual_root.add_child(node)
 	return node
 
-func _add_cylinder(node_name: String, radius: float, height: float, pos: Vector3, material: Material, rotate_z := 0.0) -> MeshInstance3D:
+func _add_cylinder(node_name: String, radius: float, height: float, pos: Vector3, material: Material, rotate_z := 0.0, parent: Node3D = null) -> MeshInstance3D:
 	var node := MeshInstance3D.new()
 	node.name = node_name
 	var mesh := CylinderMesh.new()
@@ -59,13 +62,16 @@ func _add_cylinder(node_name: String, radius: float, height: float, pos: Vector3
 	mesh.height = height
 	mesh.radial_segments = 16
 	node.mesh = mesh
-	node.position = pos - Vector3(0.0, VISUAL_PIVOT_HEIGHT, 0.0)
+	node.position = pos if parent != null else pos - Vector3(0.0, VISUAL_PIVOT_HEIGHT, 0.0)
 	node.rotation_degrees.z = rotate_z
 	node.material_override = material
-	vehicle_visual_root.add_child(node)
+	if parent != null:
+		parent.add_child(node)
+	else:
+		vehicle_visual_root.add_child(node)
 	return node
 
-func _add_torus(node_name: String, inner_radius: float, outer_radius: float, pos: Vector3, material: Material) -> MeshInstance3D:
+func _add_torus(node_name: String, inner_radius: float, outer_radius: float, pos: Vector3, material: Material, parent: Node3D = null) -> MeshInstance3D:
 	var node := MeshInstance3D.new()
 	node.name = node_name
 	var mesh := TorusMesh.new()
@@ -74,11 +80,14 @@ func _add_torus(node_name: String, inner_radius: float, outer_radius: float, pos
 	mesh.rings = 24
 	mesh.ring_segments = 12
 	node.mesh = mesh
-	node.position = pos - Vector3(0.0, VISUAL_PIVOT_HEIGHT, 0.0)
+	node.position = pos if parent != null else pos - Vector3(0.0, VISUAL_PIVOT_HEIGHT, 0.0)
 	# TorusMesh is generated around its local Y axis; vehicle wheels rotate around X.
 	node.rotation_degrees.z = 90.0
 	node.material_override = material
-	vehicle_visual_root.add_child(node)
+	if parent != null:
+		parent.add_child(node)
+	else:
+		vehicle_visual_root.add_child(node)
 	return node
 
 func _build_vehicle() -> void:
@@ -195,24 +204,29 @@ func _build_vehicle() -> void:
 	for bed_rib in range(4):
 		_add_box("CargoBedRib_%d" % bed_rib, Vector3(1.32, 0.035, 0.045), Vector3(0, 1.105, 0.78 + float(bed_rib) * 0.28), chrome)
 
-	# Four detailed wheels with visible alloy hubs.
+	# Each wheel is a single animated assembly so tire, alloy hub, spokes and lugs stay aligned.
 	for x in [-1.02, 1.02]:
 		for z in [-1.22, 1.25]:
-			var tire := _add_torus("Tire_%s_%s" % [str(x), str(z)], 0.255, 0.405, Vector3(x, 0.43, z), rubber)
-			wheel_tires.append(tire)
+			var wheel_pivot := Node3D.new()
+			wheel_pivot.name = "WheelAssembly_%s_%s" % [str(x), str(z)]
+			wheel_pivot.position = Vector3(x, 0.43 - VISUAL_PIVOT_HEIGHT, z)
+			vehicle_visual_root.add_child(wheel_pivot)
+			wheel_pivots.append(wheel_pivot)
 			if z < 0.0:
-				front_wheel_tires.append(tire)
-			_add_cylinder("AlloyHub_%s_%s" % [str(x), str(z)], 0.23, 0.295, Vector3(x * 1.005, 0.43, z), rim, 90.0)
-			_add_cylinder("HubCenter_%s_%s" % [str(x), str(z)], 0.075, 0.31, Vector3(x * 1.01, 0.43, z), black, 90.0)
+				front_wheel_pivots.append(wheel_pivot)
+			_add_torus("Tire_%s_%s" % [str(x), str(z)], 0.255, 0.405, Vector3.ZERO, rubber, wheel_pivot)
+			_add_cylinder("AlloyHub_%s_%s" % [str(x), str(z)], 0.23, 0.295, Vector3(signf(x) * 0.005, 0.0, 0.0), rim, 90.0, wheel_pivot)
+			_add_cylinder("HubCenter_%s_%s" % [str(x), str(z)], 0.075, 0.31, Vector3(signf(x) * 0.01, 0.0, 0.0), black, 90.0, wheel_pivot)
 			for spoke in range(6):
 				var spoke_angle := float(spoke) * TAU / 6.0
-				var spoke := _add_box("WheelSpoke_%s_%s_%d" % [str(x), str(z), spoke], Vector3(0.045, 0.045, 0.035), Vector3(x * 1.01 + cos(spoke_angle) * 0.13, 0.43 + sin(spoke_angle) * 0.13, z), chrome)
-				spoke.rotation.z = spoke_angle
-			# Five visible lug nuts give each alloy wheel a more finished mechanical centre.
+				var spoke_pos := Vector3(signf(x) * 0.01, sin(spoke_angle) * 0.13, cos(spoke_angle) * 0.13)
+				var spoke_node := _add_box("WheelSpoke_%s_%s_%d" % [str(x), str(z), spoke], Vector3(0.045, 0.045, 0.035), spoke_pos, chrome, false, wheel_pivot)
+				spoke_node.rotation.z = spoke_angle
+			# Five lug nuts rotate with the alloy wheel assembly.
 			for lug in range(5):
 				var lug_angle := float(lug) * TAU / 5.0
-				var lug_pos := Vector3(x + signf(x) * 0.17, 0.43 + sin(lug_angle) * 0.17, z + cos(lug_angle) * 0.17)
-				_add_cylinder("WheelLug_%s_%s_%d" % [str(x), str(z), lug], 0.026, 0.045, lug_pos, chrome, 90.0)
+				var lug_pos := Vector3(signf(x) * 0.17, sin(lug_angle) * 0.17, cos(lug_angle) * 0.17)
+				_add_cylinder("WheelLug_%s_%s_%d" % [str(x), str(z), lug], 0.026, 0.045, lug_pos, chrome, 90.0, wheel_pivot)
 	# Wheel arches and side steps add depth to the silhouette.
 	for side in [-1.0, 1.0]:
 		_add_box("SideStep_%s" % str(side), Vector3(0.13, 0.10, 0.78), Vector3(side * 1.02, 0.47, -0.20), black)
@@ -261,12 +275,12 @@ func _physics_process(delta: float) -> void:
 	if abs(speed) > 0.35:
 		rotation.y -= steer * TURN_RATE * steering_factor * delta * sign(speed)
 	wheel_spin += speed * delta / 0.405
-	for tire in wheel_tires:
-		if is_instance_valid(tire):
-			tire.rotation.x = wheel_spin
-	for front_tire in front_wheel_tires:
-		if is_instance_valid(front_tire):
-			front_tire.rotation.y = -steer * 0.34
+	for wheel_pivot in wheel_pivots:
+		if is_instance_valid(wheel_pivot):
+			wheel_pivot.rotation.x = wheel_spin
+	for front_wheel_pivot in front_wheel_pivots:
+		if is_instance_valid(front_wheel_pivot):
+			front_wheel_pivot.rotation.y = -steer * 0.34
 	if is_instance_valid(steering_wheel):
 		steering_wheel.rotation.z = deg_to_rad(90.0 + steer * 32.0)
 	# Visual-only suspension response: the physics body and collision stay level.
