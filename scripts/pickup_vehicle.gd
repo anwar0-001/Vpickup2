@@ -14,6 +14,9 @@ var turn_signal_lamps: Array[MeshInstance3D] = []
 var reverse_lamps: Array[MeshInstance3D] = []
 var wheel_pivots: Array[Node3D] = []
 var front_wheel_pivots: Array[Node3D] = []
+var wheel_rest_heights: Array[float] = []
+var wheel_suspension_offsets: Array[float] = []
+var wheel_suspension_speeds: Array[float] = []
 var steering_wheel: MeshInstance3D
 var wheel_spin := 0.0
 var vehicle_visual_root: Node3D
@@ -212,6 +215,9 @@ func _build_vehicle() -> void:
 			wheel_pivot.position = Vector3(x, 0.43 - VISUAL_PIVOT_HEIGHT, z)
 			vehicle_visual_root.add_child(wheel_pivot)
 			wheel_pivots.append(wheel_pivot)
+			wheel_rest_heights.append(wheel_pivot.position.y)
+			wheel_suspension_offsets.append(0.0)
+			wheel_suspension_speeds.append(0.0)
 			if z < 0.0:
 				front_wheel_pivots.append(wheel_pivot)
 			_add_torus("Tire_%s_%s" % [str(x), str(z)], 0.255, 0.405, Vector3.ZERO, rubber, wheel_pivot)
@@ -281,6 +287,27 @@ func _physics_process(delta: float) -> void:
 	for front_wheel_pivot in front_wheel_pivots:
 		if is_instance_valid(front_wheel_pivot):
 			front_wheel_pivot.rotation.y = -steer * 0.34
+	# Independent spring-damper travel keeps each wheel visually responsive.
+	# Positive compression raises the wheel relative to the chassis.
+	var longitudinal_load := accelerate_input * 0.052 if speed >= 0.0 else -brake_input * 0.035
+	if brake_input > 0.0 and speed > 0.0:
+		longitudinal_load = -brake_input * 0.062
+	var lateral_load := steer * clampf(absf(speed) / MAX_SPEED, 0.0, 1.0) * 0.038
+	for wheel_index in range(wheel_pivots.size()):
+		var wheel_pivot := wheel_pivots[wheel_index]
+		if not is_instance_valid(wheel_pivot):
+			continue
+		var is_front := wheel_index < 2
+		var is_left := wheel_index % 2 == 0
+		var target_offset := -longitudinal_load if is_front else longitudinal_load
+		target_offset += lateral_load if is_left else -lateral_load
+		target_offset = clampf(target_offset, -0.045, 0.065)
+		var spring_force := (target_offset - wheel_suspension_offsets[wheel_index]) * 34.0
+		var damping_force := wheel_suspension_speeds[wheel_index] * 8.5
+		wheel_suspension_speeds[wheel_index] += (spring_force - damping_force) * delta
+		wheel_suspension_offsets[wheel_index] += wheel_suspension_speeds[wheel_index] * delta
+		wheel_suspension_offsets[wheel_index] = clampf(wheel_suspension_offsets[wheel_index], -0.055, 0.075)
+		wheel_pivot.position.y = wheel_rest_heights[wheel_index] + wheel_suspension_offsets[wheel_index]
 	if is_instance_valid(steering_wheel):
 		steering_wheel.rotation.z = deg_to_rad(90.0 + steer * 32.0)
 	# Visual-only suspension response: the physics body and collision stay level.
@@ -331,3 +358,5 @@ func _process(_delta: float) -> void:
 # Keep visual suspension changes covered by the Android pull-request build.
 
 # Keep complete wheel assembly animation covered by the Android pull-request build.
+
+# Independent spring-damper wheel travel for the visual suspension pass.
