@@ -1048,19 +1048,23 @@ func _update_day_night(delta: float) -> void:
 	var hour := game_time_seconds / 3600.0
 	var daylight := clampf(sin((hour - 6.0) * PI / 12.0), 0.0, 1.0)
 	var darkness := 1.0 - daylight
+	# Concentrate warm atmospheric colour around sunrise and sunset.
+	var sunrise_glow := 1.0 - clampf(absf(hour - 6.5) / 1.8, 0.0, 1.0)
+	var sunset_glow := 1.0 - clampf(absf(hour - 17.5) / 1.8, 0.0, 1.0)
+	var twilight_strength := maxf(sunrise_glow, sunset_glow)
 	if is_instance_valid(sun_light):
 		sun_light.rotation_degrees = Vector3(hour / 24.0 * 360.0 + 90.0, -30.0, 0.0)
 		sun_light.light_energy = lerpf(0.035, 1.35, daylight)
-		sun_light.light_color = Color(0.54, 0.66, 1.0).lerp(Color(1.0, 0.91, 0.76), daylight)
+		sun_light.light_color = Color(0.54, 0.66, 1.0).lerp(Color(1.0, 0.91, 0.76), daylight).lerp(Color(1.0, 0.48, 0.28), twilight_strength * 0.58)
 	if is_instance_valid(world_environment) and world_environment.environment != null:
 		var env := world_environment.environment
 		env.ambient_light_color = Color(0.10, 0.16, 0.32).lerp(Color(0.72, 0.79, 0.9), daylight)
 		env.ambient_light_energy = lerpf(0.22, 0.85, daylight)
 	if is_instance_valid(sky_material):
 		sky_material.sky_top_color = Color(0.008, 0.015, 0.07).lerp(Color(0.10, 0.25, 0.48), daylight)
-		sky_material.sky_horizon_color = Color(0.035, 0.055, 0.13).lerp(Color(0.58, 0.75, 0.91), daylight)
+		sky_material.sky_horizon_color = Color(0.035, 0.055, 0.13).lerp(Color(0.58, 0.75, 0.91), daylight).lerp(Color(1.0, 0.38, 0.20), twilight_strength * 0.62)
 		sky_material.ground_bottom_color = Color(0.025, 0.035, 0.045).lerp(Color(0.16, 0.20, 0.16), daylight)
-		sky_material.ground_horizon_color = Color(0.04, 0.07, 0.12).lerp(Color(0.58, 0.68, 0.70), daylight)
+		sky_material.ground_horizon_color = Color(0.04, 0.07, 0.12).lerp(Color(0.58, 0.68, 0.70), daylight).lerp(Color(0.88, 0.42, 0.28), twilight_strength * 0.48)
 	for street_light in street_lights:
 		if is_instance_valid(street_light):
 			street_light.light_energy = 1.8 if darkness > 0.45 else 0.0
