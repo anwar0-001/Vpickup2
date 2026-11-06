@@ -43,6 +43,8 @@ var package_visual: MeshInstance3D
 var rain_particles: CPUParticles3D
 var rain_button: Button
 var is_raining := false
+var quality_button: Button
+var high_graphics := true
 
 func _ready() -> void:
 	_load_game()
@@ -66,7 +68,7 @@ func _create_environment() -> void:
 	sun_light.rotation_degrees = Vector3(-48, -30, 0)
 	sun_light.light_energy = 1.35
 	sun_light.shadow_enabled = true
-	sun_light.directional_shadow_max_distance = 120.0
+	sun_light.directional_shadow_max_distance = 120.0 if high_graphics else 75.0
 	add_child(sun_light)
 	world_environment = WorldEnvironment.new()
 	var env := Environment.new()
@@ -92,7 +94,7 @@ func _create_environment() -> void:
 	# First realistic-lighting pass: subtle contact shading improves depth around
 	# buildings, trees, vehicle parts and roadside props without changing the
 	# Compatibility renderer required by the Android target.
-	env.ssao_enabled = true
+	env.ssao_enabled = high_graphics
 	env.ssao_radius = 1.35
 	env.ssao_intensity = 1.05
 	env.ssao_power = 1.25
@@ -488,6 +490,20 @@ func _toggle_rain() -> void:
 		world_environment.environment.fog_density = 0.0028 if is_raining else 0.0015
 	_save_game()
 
+func _toggle_graphics_quality() -> void:
+	high_graphics = not high_graphics
+	if is_instance_valid(world_environment) and world_environment.environment != null:
+		world_environment.environment.ssao_enabled = high_graphics
+	if is_instance_valid(sun_light):
+		sun_light.directional_shadow_max_distance = 120.0 if high_graphics else 75.0
+	if is_instance_valid(rain_particles):
+		rain_particles.amount = 180 if high_graphics else 80
+	if is_instance_valid(quality_button):
+		quality_button.text = "Graphics: HIGH" if high_graphics else "Graphics: PERFORMANCE"
+	if is_instance_valid(status_label):
+		status_label.text = "High graphics enabled." if high_graphics else "Performance mode enabled for smoother play."
+	_save_game()
+
 func _create_ui() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "GameUI"
@@ -628,6 +644,12 @@ func _create_pause_menu(layer: CanvasLayer) -> void:
 	rain_button.custom_minimum_size.y = 52
 	rain_button.pressed.connect(_toggle_rain)
 	menu_items.add_child(rain_button)
+	quality_button = Button.new()
+	quality_button.name = "GraphicsQualityToggle"
+	quality_button.text = "Graphics: HIGH" if high_graphics else "Graphics: PERFORMANCE"
+	quality_button.custom_minimum_size.y = 52
+	quality_button.pressed.connect(_toggle_graphics_quality)
+	menu_items.add_child(quality_button)
 	var save_button := Button.new()
 	save_button.text = "حفظ التقدم الآن"
 	save_button.custom_minimum_size.y = 52
@@ -869,6 +891,7 @@ func _save_game() -> void:
 	save.set_value("missions", "delivery_stage", mission_stage)
 	save.set_value("world", "time_seconds", game_time_seconds)
 	save.set_value("world", "is_raining", is_raining)
+	save.set_value("graphics", "high_quality", high_graphics)
 	if is_instance_valid(vehicle) and vehicle.is_inside_tree():
 		save.set_value("player", "vehicle_position", vehicle.global_position)
 		save.set_value("player", "vehicle_rotation", vehicle.global_rotation)
@@ -882,6 +905,7 @@ func _load_game() -> void:
 	mission_stage = clampi(int(save.get_value("missions", "delivery_stage", 0)), 0, 2)
 	game_time_seconds = float(save.get_value("world", "time_seconds", game_time_seconds))
 	is_raining = bool(save.get_value("world", "is_raining", is_raining))
+	high_graphics = bool(save.get_value("graphics", "high_quality", high_graphics))
 	infinite_money = bool(save.get_value("player", "infinite_money", infinite_money))
 	var saved_position = save.get_value("player", "vehicle_position", saved_vehicle_position)
 	var saved_rotation = save.get_value("player", "vehicle_rotation", saved_vehicle_rotation)
