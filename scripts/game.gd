@@ -671,6 +671,7 @@ func _create_ui() -> void:
 	_make_hold_button(layer, "▲", "accelerate", Vector2(-166, -214), Vector2(68, 62), true)
 	_make_hold_button(layer, "▼", "brake", Vector2(-92, -142), Vector2(68, 62), true)
 	_make_hold_button(layer, "HB", "handbrake", Vector2(-166, -142), Vector2(68, 62), true)
+	_make_hold_button(layer, "R", "reverse", Vector2(-92, -214), Vector2(68, 62), true)
 	var help := Label.new()
 	help.text = "WASD / arrows or touch controls"
 	help.position = Vector2(18, 126)
@@ -797,7 +798,7 @@ func _process(delta: float) -> void:
 			var speed_ratio := clampf(vehicle_speed / 29.0, 0.0, 1.0)
 			var target_fov := 75.0 + speed_ratio * 7.0
 			follow_camera.fov = lerpf(follow_camera.fov, target_fov, clampf(delta * 3.0, 0.0, 1.0))
-		var gear := "R" if current_speed < -0.5 else ("D" if current_speed > 0.5 else "N")
+		var gear := "R" if current_speed < -0.5 else ("N" if absf(current_speed) <= 0.5 else str(vehicle.get("current_gear")))
 		speed_label.text = "%d km/h  |  %s" % [roundi(vehicle_speed * 3.6), gear]
 	var p := vehicle.global_position
 	_update_mission_objective(p)
