@@ -16,9 +16,17 @@ var wheel_tires: Array[MeshInstance3D] = []
 var front_wheel_tires: Array[MeshInstance3D] = []
 var steering_wheel: MeshInstance3D
 var wheel_spin := 0.0
+var vehicle_visual_root: Node3D
+var suspension_pitch := 0.0
+var suspension_roll := 0.0
+const VISUAL_PIVOT_HEIGHT := 0.9
 
 func _ready() -> void:
 	floor_snap_length = 0.4
+	vehicle_visual_root = Node3D.new()
+	vehicle_visual_root.name = "VehicleVisualRoot"
+	vehicle_visual_root.position = Vector3(0.0, VISUAL_PIVOT_HEIGHT, 0.0)
+	add_child(vehicle_visual_root)
 	_build_vehicle()
 
 func _mat(color: Color, roughness := 0.68, metallic := 0.0) -> StandardMaterial3D:
@@ -37,9 +45,9 @@ func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material
 		mesh.subdivide_width = 2
 		mesh.subdivide_depth = 2
 	node.mesh = mesh
-	node.position = pos
+	node.position = pos - Vector3(0.0, VISUAL_PIVOT_HEIGHT, 0.0)
 	node.material_override = material
-	add_child(node)
+	vehicle_visual_root.add_child(node)
 	return node
 
 func _add_cylinder(node_name: String, radius: float, height: float, pos: Vector3, material: Material, rotate_z := 0.0) -> MeshInstance3D:
@@ -51,10 +59,10 @@ func _add_cylinder(node_name: String, radius: float, height: float, pos: Vector3
 	mesh.height = height
 	mesh.radial_segments = 16
 	node.mesh = mesh
-	node.position = pos
+	node.position = pos - Vector3(0.0, VISUAL_PIVOT_HEIGHT, 0.0)
 	node.rotation_degrees.z = rotate_z
 	node.material_override = material
-	add_child(node)
+	vehicle_visual_root.add_child(node)
 	return node
 
 func _add_torus(node_name: String, inner_radius: float, outer_radius: float, pos: Vector3, material: Material) -> MeshInstance3D:
@@ -66,11 +74,11 @@ func _add_torus(node_name: String, inner_radius: float, outer_radius: float, pos
 	mesh.rings = 24
 	mesh.ring_segments = 12
 	node.mesh = mesh
-	node.position = pos
+	node.position = pos - Vector3(0.0, VISUAL_PIVOT_HEIGHT, 0.0)
 	# TorusMesh is generated around its local Y axis; vehicle wheels rotate around X.
 	node.rotation_degrees.z = 90.0
 	node.material_override = material
-	add_child(node)
+	vehicle_visual_root.add_child(node)
 	return node
 
 func _build_vehicle() -> void:
@@ -169,14 +177,14 @@ func _build_vehicle() -> void:
 
 		var beam := SpotLight3D.new()
 		beam.name = "HeadlightBeam_%s" % str(x)
-		beam.position = Vector3(x, 0.94, -1.98)
+		beam.position = Vector3(x, 0.94 - VISUAL_PIVOT_HEIGHT, -1.98)
 		beam.light_color = Color(1.0, 0.84, 0.58)
 		beam.light_energy = 3.0
 		beam.spot_range = 30.0
 		beam.spot_angle = 32.0
 		beam.shadow_enabled = false
 		beam.visible = false
-		add_child(beam)
+		vehicle_visual_root.add_child(beam)
 		headlights.append(beam)
 
 	# Small body details make the pickup feel less like a block model.
@@ -261,6 +269,14 @@ func _physics_process(delta: float) -> void:
 			front_tire.rotation.y = -steer * 0.34
 	if is_instance_valid(steering_wheel):
 		steering_wheel.rotation.z = deg_to_rad(90.0 + steer * 32.0)
+	# Visual-only suspension response: the physics body and collision stay level.
+	var speed_factor := clampf(absf(speed) / MAX_SPEED, 0.0, 1.0)
+	var target_pitch := -accelerate_input * 0.025 + (brake_input if speed > 0.0 else 0.0) * 0.035
+	var target_roll := -steer * speed_factor * 0.045
+	var suspension_blend := minf(delta * 5.5, 1.0)
+	if is_instance_valid(vehicle_visual_root):
+		vehicle_visual_root.rotation.x = lerpf(vehicle_visual_root.rotation.x, target_pitch, suspension_blend)
+		vehicle_visual_root.rotation.z = lerpf(vehicle_visual_root.rotation.z, target_roll, suspension_blend)
 	var forward := -global_transform.basis.z
 	velocity.x = forward.x * speed
 	velocity.z = forward.z * speed
