@@ -13,6 +13,7 @@ var brake_lamp_material: StandardMaterial3D
 var turn_signal_lamps: Array[MeshInstance3D] = []
 var reverse_lamps: Array[MeshInstance3D] = []
 var wheel_tires: Array[MeshInstance3D] = []
+var front_wheel_tires: Array[MeshInstance3D] = []
 var steering_wheel: MeshInstance3D
 var wheel_spin := 0.0
 
@@ -191,6 +192,8 @@ func _build_vehicle() -> void:
 		for z in [-1.22, 1.25]:
 			var tire := _add_torus("Tire_%s_%s" % [str(x), str(z)], 0.255, 0.405, Vector3(x, 0.43, z), rubber)
 			wheel_tires.append(tire)
+			if z < 0.0:
+				front_wheel_tires.append(tire)
 			_add_cylinder("AlloyHub_%s_%s" % [str(x), str(z)], 0.23, 0.295, Vector3(x * 1.005, 0.43, z), rim, 90.0)
 			_add_cylinder("HubCenter_%s_%s" % [str(x), str(z)], 0.075, 0.31, Vector3(x * 1.01, 0.43, z), black, 90.0)
 			for spoke in range(6):
@@ -253,6 +256,9 @@ func _physics_process(delta: float) -> void:
 	for tire in wheel_tires:
 		if is_instance_valid(tire):
 			tire.rotation.x = wheel_spin
+	for front_tire in front_wheel_tires:
+		if is_instance_valid(front_tire):
+			front_tire.rotation.y = -steer * 0.34
 	if is_instance_valid(steering_wheel):
 		steering_wheel.rotation.z = deg_to_rad(90.0 + steer * 32.0)
 	var forward := -global_transform.basis.z
