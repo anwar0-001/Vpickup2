@@ -9,6 +9,7 @@ const TURN_RATE := 1.55
 var speed := 0.0
 var yaw_rate := 0.0
 var lateral_velocity := 0.0
+var handbrake_active := false
 var headlights: Array[SpotLight3D] = []
 var brake_lamps: Array[MeshInstance3D] = []
 var brake_lamp_material: StandardMaterial3D
@@ -260,19 +261,24 @@ func _build_vehicle() -> void:
 func _physics_process(delta: float) -> void:
 	var accelerate_input := Input.get_action_strength("accelerate")
 	var brake_input := Input.get_action_strength("brake")
+	var handbrake_input := Input.get_action_strength("handbrake")
+	handbrake_active = handbrake_input > 0.05
 	# Tail lamps brighten while braking or reversing, then return to a dim running-light glow.
 	for reverse_lamp_node in reverse_lamps:
 		if is_instance_valid(reverse_lamp_node):
 			reverse_lamp_node.visible = speed < -0.2
 	if is_instance_valid(brake_lamp_material):
-		var braking := brake_input > 0.05
+		var braking := brake_input > 0.05 or handbrake_active
 		brake_lamp_material.emission_energy_multiplier = 1.8 if braking else 0.15
 		brake_lamp_material.albedo_color = Color(1.0, 0.04, 0.025) if braking else Color(0.85, 0.025, 0.018)
-	if accelerate_input > 0.0:
+	if handbrake_active:
+		# Handbrake strongly slows the pickup but never engages reverse.
+		speed = move_toward(speed, 0.0, 15.0 * delta)
+	elif accelerate_input > 0.0:
 		speed = move_toward(speed, MAX_SPEED, ACCELERATION * delta)
 	elif brake_input > 0.0:
 		if speed > 0.15:
-			# Braking slows a moving pickup before allowing reverse.
+			# Service braking slows a moving pickup before allowing reverse.
 			speed = move_toward(speed, 0.0, 26.0 * delta)
 		else:
 			speed = move_toward(speed, -REVERSE_SPEED, ACCELERATION * 0.7 * delta)
@@ -285,8 +291,10 @@ func _physics_process(delta: float) -> void:
 	yaw_rate = move_toward(yaw_rate, target_yaw_rate, 2.8 * delta)
 	rotation.y += yaw_rate * delta
 	# Lateral inertia creates a small, speed-dependent slip that tyre grip gradually removes.
-	var target_lateral_velocity := steer * absf(speed) * 0.075 if absf(speed) > 1.0 else 0.0
-	lateral_velocity = move_toward(lateral_velocity, target_lateral_velocity, 5.5 * delta)
+	var drift_factor := 0.19 if handbrake_active else 0.075
+	var target_lateral_velocity := steer * absf(speed) * drift_factor if absf(speed) > 1.0 else 0.0
+	var tyre_grip := 1.8 if handbrake_active else 5.5
+	lateral_velocity = move_toward(lateral_velocity, target_lateral_velocity, tyre_grip * delta)
 	wheel_spin += speed * delta / 0.405
 	for wheel_pivot in wheel_pivots:
 		if is_instance_valid(wheel_pivot):
@@ -299,6 +307,8 @@ func _physics_process(delta: float) -> void:
 	var longitudinal_load := accelerate_input * 0.052 if speed >= 0.0 else -brake_input * 0.035
 	if brake_input > 0.0 and speed > 0.0:
 		longitudinal_load = -brake_input * 0.062
+	if handbrake_active and speed > 0.0:
+		longitudinal_load = -0.075
 	var lateral_load := steer * clampf(absf(speed) / MAX_SPEED, 0.0, 1.0) * 0.038
 	for wheel_index in range(wheel_pivots.size()):
 		var wheel_pivot := wheel_pivots[wheel_index]
@@ -320,6 +330,8 @@ func _physics_process(delta: float) -> void:
 	# Visual-only suspension response: the physics body and collision stay level.
 	var speed_factor := clampf(absf(speed) / MAX_SPEED, 0.0, 1.0)
 	var target_pitch := -accelerate_input * 0.025 + (brake_input if speed > 0.0 else 0.0) * 0.035
+	if handbrake_active and speed > 0.0:
+		target_pitch = maxf(target_pitch, 0.025)
 	var target_roll := -steer * speed_factor * 0.045
 	var suspension_blend := minf(delta * 5.5, 1.0)
 	if is_instance_valid(vehicle_visual_root):
@@ -370,3 +382,5 @@ func _process(_delta: float) -> void:
 # Independent spring-damper wheel travel for the visual suspension pass.
 
 # Weight-balance handling: yaw inertia and tyre-grip lateral settling.
+
+# Handbrake: rear-axle grip reduction and controlled lateral slide.
