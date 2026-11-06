@@ -295,3 +295,5 @@ func _process(_delta: float) -> void:
 		if is_instance_valid(headlight):
 			headlight.visible = should_turn_on
 
+
+# Keep the front-wheel steering visual update covered by the Android pull-request build.
