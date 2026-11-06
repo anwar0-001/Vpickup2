@@ -254,7 +254,7 @@ func _physics_process(delta: float) -> void:
 		if is_instance_valid(tire):
 			tire.rotation.x = wheel_spin
 	if is_instance_valid(steering_wheel):
-		steering_wheel.rotation.z = 90.0 + steer * 32.0
+		steering_wheel.rotation.z = deg_to_rad(90.0 + steer * 32.0)
 	var forward := -global_transform.basis.z
 	velocity.x = forward.x * speed
 	velocity.z = forward.z * speed
