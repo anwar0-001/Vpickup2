@@ -10,6 +10,7 @@ var speed := 0.0
 var yaw_rate := 0.0
 var lateral_velocity := 0.0
 var tire_slip_ratio := 0.0
+var current_surface := "grass"
 var handbrake_active := false
 var current_gear := 1
 const GEAR_SPEED_LIMITS := [8.0, 14.0, 21.0, MAX_SPEED]
@@ -261,6 +262,34 @@ func _build_vehicle() -> void:
 	collision.position = Vector3(0, 0.78, 0)
 	add_child(collision)
 
+func _surface_grip_at_position() -> float:
+	var world_x := global_position.x
+	var world_z := global_position.z
+	# Main roads are defined by the same bounds as the generated road meshes.
+	var on_village_road := absf(world_x + 24.0) <= 3.5 and world_z >= -30.5 and world_z <= 74.5
+	var on_city_road := absf(world_x - 24.0) <= 3.5 and world_z >= -100.0 and world_z <= -10.0
+	var on_connector := absf(world_z + 23.0) <= 3.5 and world_x >= -27.5 and world_x <= 27.5
+	if on_village_road or on_city_road or on_connector:
+		current_surface = "wet_asphalt" if _is_raining() else "asphalt"
+		return 0.78 if _is_raining() else 1.0
+	var in_west_mud := absf(world_x + 43.0) <= 4.0 and absf(world_z + 12.0) <= 5.0
+	var in_east_mud := absf(world_x - 43.0) <= 4.0 and absf(world_z - 16.0) <= 5.0
+	if in_west_mud or in_east_mud:
+		current_surface = "mud"
+		return 0.43 if _is_raining() else 0.56
+	var in_west_dirt := absf(world_x + 41.5) <= 6.5 and absf(world_z + 12.0) <= 8.0
+	var in_east_dirt := absf(world_x - 41.5) <= 6.5 and absf(world_z - 16.0) <= 8.0
+	var in_north_dirt := absf(world_x - 1.0) <= 7.0 and absf(world_z - 50.0) <= 6.5
+	if in_west_dirt or in_east_dirt or in_north_dirt:
+		current_surface = "wet_dirt" if _is_raining() else "dirt"
+		return 0.62 if _is_raining() else 0.76
+	current_surface = "grass"
+	return 0.88 if _is_raining() else 0.94
+
+func _is_raining() -> bool:
+	var controller := get_tree().get_first_node_in_group("day_night_controller")
+	return controller != null and bool(controller.get("is_raining"))
+
 func _physics_process(delta: float) -> void:
 	var accelerate_input := Input.get_action_strength("accelerate")
 	var brake_input := Input.get_action_strength("brake")
@@ -320,9 +349,10 @@ func _physics_process(delta: float) -> void:
 	var traction_loss := clampf((steering_load - 0.34) * 1.35, 0.0, 0.62)
 	if handbrake_active:
 		traction_loss = maxf(traction_loss, 0.72)
-	var drift_factor := 0.035 + traction_loss * 0.24
+	var drift_factor := (0.035 + traction_loss * 0.24) * (1.0 + (1.0 - surface_grip) * 0.55)
 	var target_lateral_velocity := steer * absf(speed) * drift_factor if absf(speed) > 1.0 else 0.0
-	var tyre_grip := lerpf(7.2, 2.0, traction_loss)
+	var surface_grip := _surface_grip_at_position()
+	var tyre_grip := lerpf(7.2, 2.0, traction_loss) * surface_grip
 	if handbrake_active:
 		tyre_grip *= 0.52
 	lateral_velocity = move_toward(lateral_velocity, target_lateral_velocity, tyre_grip * delta)
