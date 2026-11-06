@@ -151,6 +151,12 @@ func _create_world() -> void:
 	_box(self, "VillageRoad", Vector3(7, 0.12, 105), Vector3(-24, -0.08, 22), Color(0.24, 0.24, 0.23), false)
 	_box(self, "CityRoad", Vector3(7, 0.14, 90), Vector3(24, -0.04, -55), Color(0.20, 0.21, 0.22), false)
 	_box(self, "ConnectingRoad", Vector3(55, 0.13, 7), Vector3(0, -0.05, -23), Color(0.20, 0.21, 0.22), false)
+	# Off-road dirt and mud areas provide visible, drivable surface variety.
+	_box(self, "DirtTrack_West", Vector3(13, 0.035, 16), Vector3(-41.5, -0.177, -12.0), Color(0.38, 0.29, 0.18), false)
+	_box(self, "DirtTrack_East", Vector3(13, 0.035, 16), Vector3(41.5, -0.177, 16.0), Color(0.40, 0.31, 0.19), false)
+	_box(self, "DirtTrack_North", Vector3(14, 0.035, 13), Vector3(1.0, -0.177, 50.0), Color(0.39, 0.30, 0.18), false)
+	_box(self, "MudPatch_West", Vector3(8, 0.04, 10), Vector3(-43.0, -0.155, -12.0), Color(0.20, 0.16, 0.12), false)
+	_box(self, "MudPatch_East", Vector3(8, 0.04, 10), Vector3(43.0, -0.155, 16.0), Color(0.19, 0.15, 0.11), false)
 	# Painted centre dashes and road edges.
 	for i in range(17):
 		_box(self, "VillageRoadDash_%d" % i, Vector3(0.12, 0.025, 2.1), Vector3(-24, 0.0, -27.0 + float(i) * 6.0), Color(0.92, 0.83, 0.55), false)
