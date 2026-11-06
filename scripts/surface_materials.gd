@@ -3,6 +3,8 @@ extends Node
 ## Shader uses the Compatibility renderer and avoids external texture downloads.
 
 var _applied := false
+var _rain_wetness := false
+var _road_materials: Array[ShaderMaterial] = []
 
 const SURFACE_SHADER := """
 shader_type spatial;
@@ -87,8 +89,16 @@ func _make_material(kind: String) -> ShaderMaterial:
         material.set_shader_parameter("variation", 0.30)
         material.set_shader_parameter("surface_roughness", 1.0)
     else:
-        material.set_shader_parameter("base_color", Color(0.19, 0.20, 0.205, 1.0))
+        material.set_shader_parameter("base_color", Color(0.13, 0.145, 0.155, 1.0) if _rain_wetness else Color(0.19, 0.20, 0.205, 1.0))
         material.set_shader_parameter("grain_scale", 3.2)
         material.set_shader_parameter("variation", 0.17)
-        material.set_shader_parameter("surface_roughness", 0.96)
+        material.set_shader_parameter("surface_roughness", 0.46 if _rain_wetness else 0.96)
+        _road_materials.append(material)
     return material
+
+func set_rain_wetness(enabled: bool) -> void:
+    _rain_wetness = enabled
+    for road_material in _road_materials:
+        if is_instance_valid(road_material):
+            road_material.set_shader_parameter("base_color", Color(0.13, 0.145, 0.155, 1.0) if enabled else Color(0.19, 0.20, 0.205, 1.0))
+            road_material.set_shader_parameter("surface_roughness", 0.46 if enabled else 0.96)
