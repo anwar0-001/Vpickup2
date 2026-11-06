@@ -349,9 +349,9 @@ func _physics_process(delta: float) -> void:
 	var traction_loss := clampf((steering_load - 0.34) * 1.35, 0.0, 0.62)
 	if handbrake_active:
 		traction_loss = maxf(traction_loss, 0.72)
+	var surface_grip := _surface_grip_at_position()
 	var drift_factor := (0.035 + traction_loss * 0.24) * (1.0 + (1.0 - surface_grip) * 0.55)
 	var target_lateral_velocity := steer * absf(speed) * drift_factor if absf(speed) > 1.0 else 0.0
-	var surface_grip := _surface_grip_at_position()
 	var tyre_grip := lerpf(7.2, 2.0, traction_loss) * surface_grip
 	if handbrake_active:
 		tyre_grip *= 0.52
