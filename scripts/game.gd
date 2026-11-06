@@ -51,6 +51,7 @@ func _ready() -> void:
 	add_to_group("day_night_controller")
 	_create_environment()
 	_create_world()
+	SurfaceMaterials.set_rain_wetness(is_raining)
 	_create_player()
 	_create_ui()
 	_update_hud()
