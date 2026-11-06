@@ -166,6 +166,7 @@ func _create_world() -> void:
 	_label_3d("VILLAGE", Vector3(-40, 2, 62), Color(1, 0.94, 0.68))
 	_label_3d("CITY", Vector3(35, 2, -82), Color(0.72, 0.9, 1))
 	_create_village()
+	_create_natural_details()
 	_create_city()
 	_create_shops()
 	_create_street_furniture()
@@ -329,6 +330,53 @@ func _create_village() -> void:
 			var shade := 0.94 + float((i + cluster_index) % 3) * 0.06
 			cluster.material_override = _material(Color(foliage_color.r * shade, foliage_color.g * shade, foliage_color.b * shade), 0.98)
 			add_child(cluster)
+
+func _create_natural_details() -> void:
+	# Reusable low-cost meshes add scale and variation to the open village terrain.
+	var stone_material := _material(Color(0.34, 0.36, 0.33), 0.96, 0.0)
+	var shrub_materials: Array[StandardMaterial3D] = [
+		_material(Color(0.10, 0.27, 0.12), 0.98, 0.0),
+		_material(Color(0.15, 0.34, 0.14), 0.98, 0.0),
+		_material(Color(0.20, 0.37, 0.16), 0.98, 0.0)
+	]
+	var rock_positions: Array[Vector3] = [
+		Vector3(-67.0, -0.12, 8.0), Vector3(-59.0, -0.12, 29.0),
+		Vector3(-50.0, -0.12, 51.0), Vector3(-13.0, -0.12, 43.0),
+		Vector3(-8.0, -0.12, 12.0), Vector3(-69.0, -0.12, -13.0),
+		Vector3(-48.0, -0.12, -17.0), Vector3(-7.0, -0.12, -34.0),
+		Vector3(1.0, -0.12, 13.0), Vector3(47.0, -0.12, -104.0),
+		Vector3(54.0, -0.12, -72.0), Vector3(0.0, -0.12, -112.0)
+	]
+	for index in range(rock_positions.size()):
+		var rock := MeshInstance3D.new()
+		rock.name = "TerrainStone_%02d" % index
+		var rock_mesh := SphereMesh.new()
+		rock_mesh.radius = 0.48 + float(index % 3) * 0.12
+		rock_mesh.height = 0.62 + float(index % 2) * 0.16
+		rock.mesh = rock_mesh
+		rock.position = rock_positions[index]
+		rock.scale = Vector3(1.25 + float(index % 2) * 0.25, 0.62, 0.82 + float(index % 3) * 0.12)
+		rock.rotation_degrees = Vector3(float(index * 13 % 18), float(index * 37 % 180), float(index * 7 % 14))
+		rock.material_override = stone_material
+		add_child(rock)
+	var shrub_positions: Array[Vector3] = [
+		Vector3(-64.0, 0.18, 18.0), Vector3(-55.0, 0.16, 44.0),
+		Vector3(-17.0, 0.18, 36.0), Vector3(-12.0, 0.16, 5.0),
+		Vector3(-63.0, 0.16, -4.0), Vector3(-43.0, 0.18, -20.0),
+		Vector3(4.0, 0.16, 18.0), Vector3(51.0, 0.16, -108.0),
+		Vector3(56.0, 0.16, -66.0), Vector3(-5.0, 0.16, -116.0)
+	]
+	for index in range(shrub_positions.size()):
+		var shrub := MeshInstance3D.new()
+		shrub.name = "WildShrub_%02d" % index
+		var shrub_mesh := SphereMesh.new()
+		shrub_mesh.radius = 0.72
+		shrub_mesh.height = 0.92
+		shrub.mesh = shrub_mesh
+		shrub.position = shrub_positions[index]
+		shrub.scale = Vector3(1.25 + float(index % 3) * 0.18, 0.72, 0.92 + float(index % 2) * 0.2)
+		shrub.material_override = shrub_materials[index % shrub_materials.size()]
+		add_child(shrub)
 
 func _create_city() -> void:
 	for i in range(5):
