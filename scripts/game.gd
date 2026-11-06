@@ -401,14 +401,25 @@ func _create_shops() -> void:
 
 func _building(building_name: String, size: Vector3, pos: Vector3, wall_color: Color, roof_color: Color) -> void:
 	_box(self, building_name, size, pos, wall_color)
-	_box(self, building_name + "_Roof", Vector3(size.x * 1.12, 0.5, size.z * 1.12), pos + Vector3(0, size.y / 2.0 + 0.25, 0), roof_color, false)
+	var roof_cap := _box(self, building_name + "_Roof", Vector3(size.x * 1.12, 0.5, size.z * 1.12), pos + Vector3(0, size.y / 2.0 + 0.25, 0), roof_color, false)
+	if building_name.begins_with("VillageHouse_"):
+		# Two sloped roof planes replace the flat cap on village homes.
+		roof_cap.visible = false
+		var roof_material := _material(roof_color, 0.88, 0.0)
+		var roof_height := size.y / 2.0 + 0.25 + 0.83
+		var left_roof := _box(self, building_name + "_RoofLeft", Vector3(size.x * 0.62, 0.18, size.z * 1.16), pos + Vector3(-size.x * 0.25, roof_height, 0), roof_color, false)
+		left_roof.material_override = roof_material
+		left_roof.rotation.z = 0.48
+		var right_roof := _box(self, building_name + "_RoofRight", Vector3(size.x * 0.62, 0.18, size.z * 1.16), pos + Vector3(size.x * 0.25, roof_height, 0), roof_color, false)
+		right_roof.material_override = roof_material
+		right_roof.rotation.z = -0.48
 	_box(self, building_name + "_Door", Vector3(0.8, 1.7, 0.12), pos + Vector3(0, -size.y * 0.16, size.z / 2.0 + 0.07), Color(0.22,0.13,0.08), false)
 	# A darker plinth and a narrow facade band add depth to otherwise box-built walls.
 	_box(self, building_name + "_Foundation", Vector3(size.x + 0.08, 0.24, 0.10), pos + Vector3(0, -size.y / 2.0 + 0.18, size.z / 2.0 + 0.045), Color(0.38, 0.37, 0.33), false)
 	if building_name == "CarDealership" or building_name == "FoodMarket":
 		var awning_color := Color(0.13, 0.29, 0.42) if building_name == "CarDealership" else Color(0.78, 0.72, 0.43)
 		_box(self, building_name + "_EntranceAwning", Vector3(size.x * 0.72, 0.14, 1.0), pos + Vector3(0, 0.35, size.z / 2.0 + 0.48), awning_color, false)
-	if size.y > 4.5:
+	if size.y >= 4.0:
 		var glass_colors := [Color(0.24,0.48,0.62), Color(0.62,0.72,0.76), Color(0.86,0.68,0.38)]
 		for floor_index in range(maxi(1, int(size.y / 2.8))):
 			for window_index in range(3):
