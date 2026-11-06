@@ -9,6 +9,7 @@ const TURN_RATE := 1.55
 var speed := 0.0
 var yaw_rate := 0.0
 var lateral_velocity := 0.0
+var tire_slip_ratio := 0.0
 var handbrake_active := false
 var current_gear := 1
 const GEAR_SPEED_LIMITS := [8.0, 14.0, 21.0, MAX_SPEED]
@@ -313,11 +314,20 @@ func _physics_process(delta: float) -> void:
 	# A heavier pickup builds and releases yaw momentum instead of snapping instantly.
 	yaw_rate = move_toward(yaw_rate, target_yaw_rate, 2.8 * delta)
 	rotation.y += yaw_rate * delta
-	# Lateral inertia creates a small, speed-dependent slip that tyre grip gradually removes.
-	var drift_factor := 0.19 if handbrake_active else 0.075
+	# Progressive tyre slip: aggressive steering at speed can exceed available grip.
+	var speed_ratio := clampf(absf(speed) / MAX_SPEED, 0.0, 1.0)
+	var steering_load := clampf(absf(steer) * speed_ratio * 1.35, 0.0, 1.0)
+	var traction_loss := clampf((steering_load - 0.34) * 1.35, 0.0, 0.62)
+	if handbrake_active:
+		traction_loss = maxf(traction_loss, 0.72)
+	var drift_factor := 0.035 + traction_loss * 0.24
 	var target_lateral_velocity := steer * absf(speed) * drift_factor if absf(speed) > 1.0 else 0.0
-	var tyre_grip := 1.8 if handbrake_active else 5.5
+	var tyre_grip := lerpf(7.2, 2.0, traction_loss)
+	if handbrake_active:
+		tyre_grip *= 0.52
 	lateral_velocity = move_toward(lateral_velocity, target_lateral_velocity, tyre_grip * delta)
+	lateral_velocity = clampf(lateral_velocity, -absf(speed) * 0.38, absf(speed) * 0.38)
+	tire_slip_ratio = clampf(absf(lateral_velocity) / maxf(absf(speed), 2.0), 0.0, 0.65)
 	wheel_spin += speed * delta / 0.405
 	for wheel_pivot in wheel_pivots:
 		if is_instance_valid(wheel_pivot):
