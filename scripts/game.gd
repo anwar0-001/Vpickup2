@@ -45,6 +45,7 @@ var rain_button: Button
 var is_raining := false
 var quality_button: Button
 var high_graphics := true
+var follow_camera: Camera3D
 
 func _ready() -> void:
 	_load_game()
@@ -502,6 +503,7 @@ func _create_player() -> void:
 
 func _attach_camera(target_vehicle: Node3D) -> void:
 	var camera := Camera3D.new()
+	follow_camera = camera
 	camera.name = "FollowCamera"
 	camera.position = Vector3(0, 5.8, 9.5)
 	camera.rotation_degrees = Vector3(-23, 0, 0)
@@ -790,6 +792,10 @@ func _process(delta: float) -> void:
 	if is_instance_valid(speed_label):
 		var current_speed := float(vehicle.get("speed"))
 		var vehicle_speed := absf(current_speed)
+		if is_instance_valid(follow_camera):
+			var speed_ratio := clampf(vehicle_speed / 29.0, 0.0, 1.0)
+			var target_fov := 75.0 + speed_ratio * 7.0
+			follow_camera.fov = lerpf(follow_camera.fov, target_fov, clampf(delta * 3.0, 0.0, 1.0))
 		var gear := "R" if current_speed < -0.5 else ("D" if current_speed > 0.5 else "N")
 		speed_label.text = "%d km/h  |  %s" % [roundi(vehicle_speed * 3.6), gear]
 	var p := vehicle.global_position
