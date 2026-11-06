@@ -30,6 +30,9 @@ var vehicle_visual_root: Node3D
 var suspension_pitch := 0.0
 var suspension_roll := 0.0
 const VISUAL_PIVOT_HEIGHT := 0.9
+var collision_marks: Array[MeshInstance3D] = []
+var collision_damage_level := 0
+var collision_damage_cooldown := 0.0
 
 func _ready() -> void:
 	floor_snap_length = 0.4
@@ -262,6 +265,24 @@ func _build_vehicle() -> void:
 	collision.position = Vector3(0, 0.78, 0)
 	add_child(collision)
 
+	# Recessed dark scuff panels become visible progressively after hard impacts.
+	var damage_mat := _mat(Color(0.12, 0.055, 0.035), 0.96, 0.0)
+	for mark_index in range(12):
+		var mark: MeshInstance3D
+		if mark_index < 3:
+			mark = _add_box("DamageMark_Front_%d" % mark_index, Vector3(0.22, 0.055, 0.025), Vector3(-0.52 + float(mark_index) * 0.52, 0.72 + float(mark_index % 2) * 0.13, -2.045), damage_mat)
+		elif mark_index < 6:
+			var rear_index := mark_index - 3
+			mark = _add_box("DamageMark_Rear_%d" % rear_index, Vector3(0.22, 0.055, 0.025), Vector3(-0.52 + float(rear_index) * 0.52, 0.72 + float(rear_index % 2) * 0.13, 2.045), damage_mat)
+		elif mark_index < 9:
+			var left_index := mark_index - 6
+			mark = _add_box("DamageMark_Left_%d" % left_index, Vector3(0.025, 0.055, 0.22), Vector3(-1.035, 0.82 + float(left_index % 2) * 0.12, -0.70 + float(left_index) * 0.55), damage_mat)
+		else:
+			var right_index := mark_index - 9
+			mark = _add_box("DamageMark_Right_%d" % (mark_index - 9), Vector3(0.025, 0.055, 0.22), Vector3(1.035, 0.82 + float((mark_index - 9) % 2) * 0.12, -0.70 + float(mark_index - 9) * 0.55), damage_mat)
+		mark.visible = false
+		collision_marks.append(mark)
+
 func _surface_grip_at_position() -> float:
 	var world_x := global_position.x
 	var world_z := global_position.z
@@ -408,13 +429,39 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= 22.0 * delta
 	else:
 		velocity.y = -0.5
+	var velocity_before_impact := velocity
 	move_and_slide()
+	collision_damage_cooldown = maxf(collision_damage_cooldown - delta, 0.0)
 	# Reduce speed on walls or other vehicles, but ignore floor contacts.
 	for collision_index in range(get_slide_collision_count()):
 		var hit := get_slide_collision(collision_index)
 		if absf(hit.get_normal().y) < 0.65:
-			speed = move_toward(speed, 0.0, 18.0 * delta)
+			var impact_speed := maxf(0.0, -velocity_before_impact.dot(hit.get_normal()))
+			if impact_speed >= 5.5 and collision_damage_cooldown <= 0.0:
+				var local_normal := global_transform.basis.inverse() * hit.get_normal()
+				_apply_collision_damage(impact_speed, local_normal)
+				speed = move_toward(speed, 0.0, 18.0 * delta)
 			break
+
+func _apply_collision_damage(impact_speed: float, local_normal: Vector3) -> void:
+	if collision_marks.size() < 12:
+		return
+	var first_mark := 0
+	if absf(local_normal.x) > absf(local_normal.z):
+		first_mark = 6 if local_normal.x > 0.0 else 9
+	else:
+		first_mark = 0 if local_normal.z > 0.0 else 3
+	var marks_to_show := 1
+	if impact_speed >= 10.0:
+		marks_to_show = 2
+	if impact_speed >= 16.0:
+		marks_to_show = 3
+	for mark_offset in range(marks_to_show):
+		var mark_index := first_mark + mark_offset
+		if mark_index >= 0 and mark_index < collision_marks.size():
+			collision_marks[mark_index].visible = true
+	collision_damage_level += marks_to_show
+	collision_damage_cooldown = 1.1
 
 func _process(_delta: float) -> void:
 	# Steering input activates matching front and rear amber indicators.
