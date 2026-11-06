@@ -12,6 +12,9 @@ var brake_lamps: Array[MeshInstance3D] = []
 var brake_lamp_material: StandardMaterial3D
 var turn_signal_lamps: Array[MeshInstance3D] = []
 var reverse_lamps: Array[MeshInstance3D] = []
+var wheel_tires: Array[MeshInstance3D] = []
+var steering_wheel: MeshInstance3D
+var wheel_spin := 0.0
 
 func _ready() -> void:
 	floor_snap_length = 0.4
@@ -144,7 +147,7 @@ func _build_vehicle() -> void:
 	_add_box("DashboardInstrumentPanel", Vector3(0.54, 0.16, 0.055), Vector3(-0.43, 1.22, -0.91), chrome)
 	_add_box("RearViewMirror", Vector3(0.28, 0.075, 0.055), Vector3(0, 1.60, -0.91), black)
 	_add_cylinder("SteeringColumn", 0.055, 0.28, Vector3(-0.43, 1.17, -0.78), black)
-	_add_cylinder("SteeringWheel", 0.22, 0.045, Vector3(-0.43, 1.30, -0.78), black, 90.0)
+	steering_wheel = _add_cylinder("SteeringWheel", 0.22, 0.045, Vector3(-0.43, 1.30, -0.78), black, 90.0)
 	_add_cylinder("GearShift", 0.035, 0.24, Vector3(0.12, 1.15, -0.02), chrome)
 	_add_cylinder("GearShiftKnob", 0.075, 0.08, Vector3(0.12, 1.30, -0.02), black)
 	_add_box("FrontLicensePlate", Vector3(0.48, 0.12, 0.035), Vector3(0, 0.58, -2.035), chrome)
@@ -186,7 +189,8 @@ func _build_vehicle() -> void:
 	# Four detailed wheels with visible alloy hubs.
 	for x in [-1.02, 1.02]:
 		for z in [-1.22, 1.25]:
-			_add_torus("Tire_%s_%s" % [str(x), str(z)], 0.255, 0.405, Vector3(x, 0.43, z), rubber)
+			var tire := _add_torus("Tire_%s_%s" % [str(x), str(z)], 0.255, 0.405, Vector3(x, 0.43, z), rubber)
+			wheel_tires.append(tire)
 			_add_cylinder("AlloyHub_%s_%s" % [str(x), str(z)], 0.23, 0.295, Vector3(x * 1.005, 0.43, z), rim, 90.0)
 			_add_cylinder("HubCenter_%s_%s" % [str(x), str(z)], 0.075, 0.31, Vector3(x * 1.01, 0.43, z), black, 90.0)
 			for spoke in range(6):
@@ -245,6 +249,12 @@ func _physics_process(delta: float) -> void:
 	var steering_factor := clampf(abs(speed) / MAX_SPEED, 0.18, 1.0)
 	if abs(speed) > 0.35:
 		rotation.y -= steer * TURN_RATE * steering_factor * delta * sign(speed)
+	wheel_spin += speed * delta / 0.405
+	for tire in wheel_tires:
+		if is_instance_valid(tire):
+			tire.rotation.x = wheel_spin
+	if is_instance_valid(steering_wheel):
+		steering_wheel.rotation.z = deg_to_rad(90.0 + steer * 32.0)
 	var forward := -global_transform.basis.z
 	velocity.x = forward.x * speed
 	velocity.z = forward.z * speed
