@@ -53,11 +53,30 @@ func _add_cylinder(node_name: String, radius: float, height: float, pos: Vector3
 	add_child(node)
 	return node
 
+func _add_torus(node_name: String, inner_radius: float, outer_radius: float, pos: Vector3, material: Material) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	node.name = node_name
+	var mesh := TorusMesh.new()
+	mesh.inner_radius = inner_radius
+	mesh.outer_radius = outer_radius
+	mesh.rings = 24
+	mesh.ring_segments = 12
+	node.mesh = mesh
+	node.position = pos
+	# TorusMesh is generated around its local Y axis; vehicle wheels rotate around X.
+	node.rotation_degrees.z = 90.0
+	node.material_override = material
+	add_child(node)
+	return node
+
 func _build_vehicle() -> void:
-	var paint := _mat(Color(0.72, 0.075, 0.045), 0.28, 0.35)
-	var paint_dark := _mat(Color(0.34, 0.035, 0.025), 0.34, 0.25)
-	var rubber := _mat(Color(0.035, 0.04, 0.045), 0.92)
-	var rim := _mat(Color(0.62, 0.67, 0.70), 0.25, 0.82)
+	var paint := _mat(Color(0.72, 0.075, 0.045), 0.24, 0.42)
+	paint.clearcoat_enabled = true
+	paint.clearcoat = 0.72
+	paint.clearcoat_roughness = 0.22
+	var paint_dark := _mat(Color(0.34, 0.035, 0.025), 0.30, 0.30)
+	var rubber := _mat(Color(0.035, 0.04, 0.045), 0.98)
+	var rim := _mat(Color(0.62, 0.67, 0.70), 0.20, 0.88)
 	var glass := _mat(Color(0.10, 0.25, 0.31), 0.18, 0.2)
 	var chrome := _mat(Color(0.72, 0.75, 0.76), 0.22, 0.9)
 	var lamp := _mat(Color(1.0, 0.88, 0.57), 0.2, 0.1)
@@ -142,13 +161,18 @@ func _build_vehicle() -> void:
 	# Four detailed wheels with visible alloy hubs.
 	for x in [-1.02, 1.02]:
 		for z in [-1.22, 1.25]:
-			_add_cylinder("Tire_%s_%s" % [str(x), str(z)], 0.40, 0.28, Vector3(x, 0.43, z), rubber, 90.0)
+			_add_torus("Tire_%s_%s" % [str(x), str(z)], 0.255, 0.405, Vector3(x, 0.43, z), rubber)
 			_add_cylinder("AlloyHub_%s_%s" % [str(x), str(z)], 0.23, 0.295, Vector3(x * 1.005, 0.43, z), rim, 90.0)
 			_add_cylinder("HubCenter_%s_%s" % [str(x), str(z)], 0.075, 0.31, Vector3(x * 1.01, 0.43, z), black, 90.0)
 			for spoke in range(6):
 				var spoke_angle := float(spoke) * TAU / 6.0
 				var spoke := _add_box("WheelSpoke_%s_%s_%d" % [str(x), str(z), spoke], Vector3(0.045, 0.045, 0.035), Vector3(x * 1.01 + cos(spoke_angle) * 0.13, 0.43 + sin(spoke_angle) * 0.13, z), chrome)
 				spoke.rotation.z = spoke_angle
+			# Five visible lug nuts give each alloy wheel a more finished mechanical centre.
+			for lug in range(5):
+				var lug_angle := float(lug) * TAU / 5.0
+				var lug_pos := Vector3(x + signf(x) * 0.17, 0.43 + sin(lug_angle) * 0.17, z + cos(lug_angle) * 0.17)
+				_add_cylinder("WheelLug_%s_%s_%d" % [str(x), str(z), lug], 0.026, 0.045, lug_pos, chrome, 90.0)
 	# Wheel arches and side steps add depth to the silhouette.
 	for side in [-1.0, 1.0]:
 		_add_box("SideStep_%s" % str(side), Vector3(0.13, 0.10, 0.78), Vector3(side * 1.02, 0.47, -0.20), black)
