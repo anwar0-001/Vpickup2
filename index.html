@@ -23,7 +23,7 @@
 <body>
 <canvas id="game"></canvas>
 <div id="hud">
-<div class="stat"><small>الرصيد</small><b id="money">0</b></div><div class="stat"><small>الوقود</small><b id="fuel">100%</b></div><div class="stat"><small>السرعة</small><b id="speed">0 km/h</b></div><div class="stat"><small>الضرر</small><b id="damage">0%</b></div><div class="stat"><small>الوقت</small><b id="clock">08:00</b></div><div class="stat"><small>المنطقة</small><b id="region">وسط المدينة</b></div>
+<div class="stat"><small>الرصيد</small><b id="money">0</b></div><div class="stat"><small>الوقود</small><b id="fuel">100%</b></div><div class="stat"><small>السرعة</small><b id="speed">0 km/h</b></div><div class="stat"><small>RPM / الغيار</small><b id="driveReadout">900 · N</b></div><div class="stat"><small>الضرر</small><b id="damage">0%</b></div><div class="stat"><small>الوقت</small><b id="clock">08:00</b></div><div class="stat"><small>المنطقة</small><b id="region">وسط المدينة</b></div>
 </div>
 <div id="mission">المهمة: <b id="objective">استكشف المدينة</b></div>
 <div id="top"><button id="pause">Ⅱ</button><button id="mapBtn">الخريطة</button><button id="cameraBtn">📷</button><button id="qualityBtn">Q: M</button><button id="weatherBtn">طقس: صافٍ</button></div>
@@ -425,7 +425,7 @@ rainGeo.setAttribute("position",new THREE.BufferAttribute(rainPos,3));rainGeo.se
 const rainMaterial=new THREE.LineBasicMaterial({color:0xc5e5f5,transparent:true,opacity:0.0,depthWrite:false});
 const rain=new THREE.LineSegments(rainGeo,rainMaterial);rain.visible=false;scene.add(rain);
 let weather="clear",weatherClock=0,weatherBlend=1,weatherFogTarget=.0019,weatherOpacityTarget=0,weatherBgTarget=new THREE.Color(0x91b8ce),weatherFogColorTarget=new THREE.Color(0x91b8ce),weatherClockLabel="صافٍ",rainWindX=-3.5,rainWindZ=8,dayClock=save.day*60,elapsed=0,mission=null,carried=[],missionDone=0,score=0,state="menu",cameraMode=0,quality=save.quality,showFPS=false,muted=false,radioOn=false,radioTimer=null,engineOsc=null,audio=null,last=0,frameCount=0,fpsTimer=0,fps=0,nextCull=0,lastFine=-99;
-let onFoot=false,walkPhase=0;let controls={steer:0,gas:false,brake:false,hand:false},keys={},vehicle={speed:0,steer:0,heading:0,gear:1,rpm:900,slip:0,damage:save.damage||0,fuel:save.fuel||100,broken:false,tireWear:save.tireWear||0};
+let onFoot=false,walkPhase=0;let controls={steer:0,gas:false,brake:false,hand:false},keys={},vehicle={speed:0,steer:0,heading:0,gear:1,rpm:900,slip:0,lateralSpeed:0,absActive:false,shiftTimer:0,accelG:0,damage:save.damage||0,fuel:save.fuel||100,broken:false,tireWear:save.tireWear||0};
 const maxCargo=()=>player.userData.cfg.capacity+save.upgrades.cargo*3;
 function persist(){save.fuel=vehicle.fuel;save.damage=vehicle.damage;save.tireWear=vehicle.tireWear||0;save.day=dayClock/60;save.money=Math.max(0,Math.floor(save.money));try{localStorage.setItem(SAVE,JSON.stringify(save))}catch{}}
 const qualityProfiles=[{name:"Low",pixelRatio:.8,shadows:false,shadowMap:256,rainSegments:140,buildingDistance:145,regionMargin:65,trafficDistance:135,pedestrianDistance:65},{name:"Medium",pixelRatio:1,shadows:true,shadowMap:512,rainSegments:360,buildingDistance:285,regionMargin:155,trafficDistance:190,pedestrianDistance:100},{name:"High",pixelRatio:1.35,shadows:true,shadowMap:1024,rainSegments:650,buildingDistance:440,regionMargin:270,trafficDistance:245,pedestrianDistance:135}];
@@ -435,7 +435,7 @@ function vibrate(ms=35){if(navigator.vibrate)navigator.vibrate(ms)}
 function audioInit(){if(audio)return;try{audio=new AudioContext();let osc=audio.createOscillator(),gain=audio.createGain();osc.type="sawtooth";osc.frequency.value=55;gain.gain.value=.0001;osc.connect(gain);gain.connect(audio.destination);osc.start();engineOsc={osc,gain};}catch{}}
 function beep(freq=440,dur=.12){if(muted)return;audioInit();if(!audio)return;let o=audio.createOscillator(),g=audio.createGain();o.frequency.value=freq;g.gain.setValueAtTime(.05,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+dur)}
 function districtName(pos){let best=null,dist=Infinity;for(const r of city.regions){const d=Math.hypot(pos.x-r.x,pos.z-r.z);if(d<r.radius&&d<dist){best=r;dist=d}}if(best)return best.name;if(Math.abs(pos.x)<470&&Math.abs(pos.z)<470)return "وسط المدينة";return "الضواحي والطرق"}
-function hud(){ $("region").textContent=districtName(onFoot?walker.position:player.position);$("exitBtn").textContent=insideHome?"🚪 خروج المنزل":onFoot?"🚙 ركوب":"🚶 خروج";$("money").textContent=Math.floor(save.money)+" ◈";$("fuel").textContent=Math.round(vehicle.fuel)+"%";$("speed").textContent=Math.round(Math.abs(vehicle.speed)*3.6)+" km/h";$("damage").textContent=Math.round(vehicle.damage)+"%";let h=Math.floor(dayClock/60)%24,m=Math.floor(dayClock%60);$("clock").textContent=String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");$("objective").textContent=mission?mission.label:"تجول أو ابدأ عقداً من المتجر"}
+function hud(){ $("region").textContent=districtName(onFoot?walker.position:player.position);$("exitBtn").textContent=insideHome?"🚪 خروج المنزل":onFoot?"🚙 ركوب":"🚶 خروج";$("money").textContent=Math.floor(save.money)+" ◈";$("fuel").textContent=Math.round(vehicle.fuel)+"%";$("speed").textContent=Math.round(Math.abs(vehicle.speed)*3.6)+" km/h";$("driveReadout").textContent=Math.round(vehicle.rpm)+" · "+(vehicle.speed<-.4?"R":vehicle.speed<.4?"N":vehicle.gear);$("driveReadout").style.color=vehicle.absActive?"#ffd36e":"#fff";$("damage").textContent=Math.round(vehicle.damage)+"%";let h=Math.floor(dayClock/60)%24,m=Math.floor(dayClock%60);$("clock").textContent=String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");$("objective").textContent=mission?mission.label:"تجول أو ابدأ عقداً من المتجر"}
 function overlay(title,body,buttons){$("overlay").classList.remove("hide");$("panel").innerHTML='<div class="logo">'+title+'</div><div class="sub">'+body+'</div>'+buttons}
 function mainMenu(){state="menu";overlay("PICKUP<br>OPEN WORLD", "مدينة مفتوحة إجرائية، قيادة وتوصيل ومركبات أصلية. احفظ تقدمك محلياً على هذا الجهاز.<br><br>الرصيد: "+Math.floor(save.money)+" ◈ · أفضل نتيجة: "+save.high, '<button class="primary" id="start">دخول العالم</button><br><button class="secondary" id="garageMenu">الكراج والمتجر</button> <button class="secondary" id="settingsMenu">الجودة والإعدادات</button>')}
 function start(){state="play";$("overlay").classList.add("hide");if(!mission)createMission();audioInit();hud()}
@@ -474,46 +474,87 @@ function walkUpdate(dt){const forward=controls.gas||keys.w||keys.arrowup,back=co
 function physics(dt){
  const cfg=player.userData.cfg,gas=controls.gas||keys.w||keys.arrowup,brake=controls.brake||keys.s||keys.arrowdown;
  let steer=clamp(controls.steer+(keys.a||keys.arrowleft?-1:0)+(keys.d||keys.arrowright?1:0),-1,1);
- const oldX=player.position.x,oldZ=player.position.z,absSpeed=Math.abs(vehicle.speed);
+ const oldX=player.position.x,oldZ=player.position.z,previousSpeed=vehicle.speed,absSpeed=Math.abs(previousSpeed);
  const onRoad=city.roads.some(r=>Math.abs(player.position.x-r.x)<=r.w/2+3&&Math.abs(player.position.z-r.z)<=r.d/2+3);
  const wet=weather==="rain"||weather==="thunder",surfaceGrip=onRoad?(wet?.72:1):.62;
- const tireGrip=Math.max(.58,1-(vehicle.tireWear||0)*.004),grip=(1+save.upgrades.grip*.12)*surfaceGrip*tireGrip;
+ const tireGrip=Math.max(.48,1-(vehicle.tireWear||0)*.004),grip=clamp((1+save.upgrades.grip*.12)*surfaceGrip*tireGrip,.38,1.3);
  const load=carried.length?Math.max(.55,1-carried.length/(maxCargo()+2)*.34):1;
  const maxSpeed=(cfg.speed+save.upgrades.engine*2.5)*load*(1-vehicle.damage/175)*(1-(vehicle.tireWear||0)*.002);
- const mass=cfg.mass||1,engineForce=(maxSpeed/15.5)/mass;
- if(gas){if(vehicle.speed<0)vehicle.speed=Math.min(0,vehicle.speed+13*dt);else vehicle.speed+=engineForce*dt}
- if(brake){if(vehicle.speed>0)vehicle.speed=Math.max(0,vehicle.speed-18*dt);else vehicle.speed=Math.max(-10,vehicle.speed-7*dt)}
+ const mass=cfg.mass||1,ratios=[0,3.15,2.15,1.55,1.2,.96,.78,.64];
+ // Automatic gearbox: throttle torque follows the engine band and shifts briefly unload the drivetrain.
+ const forwardSpeed=Math.max(0,vehicle.speed),ratio=ratios[clamp(vehicle.gear,1,7)];
+ const wheelRPM=forwardSpeed*ratio*72,desiredRPM=gas?clamp(1050+wheelRPM,1050,6200):clamp(850+wheelRPM*.72,850,3900);
+ vehicle.rpm=THREE.MathUtils.damp(vehicle.rpm,desiredRPM,dt,gas?5.5:3.8);
+ if(vehicle.shiftTimer>0)vehicle.shiftTimer=Math.max(0,vehicle.shiftTimer-dt);
+ if(vehicle.speed>=0){
+  if(vehicle.rpm>5550&&vehicle.gear<7&&vehicle.shiftTimer<=0){vehicle.gear++;vehicle.shiftTimer=.22;vehicle.rpm=Math.max(1800,vehicle.rpm*.68)}
+  else if(vehicle.rpm<1450&&vehicle.gear>1&&vehicle.shiftTimer<=0&&vehicle.speed<maxSpeed*.78){vehicle.gear--;vehicle.shiftTimer=.18}
+ }
+ const torqueBand=clamp(1-Math.abs(vehicle.rpm-3600)/4300,.38,1);
+ const gearForce=ratios[clamp(vehicle.gear,1,7)]/3.15;
+ const engineForce=(maxSpeed/15.5)/mass*(.7+torqueBand*.42)*(.72+gearForce*.28);
+ if(gas&&!vehicle.broken){
+  if(vehicle.speed<-.35)vehicle.speed=Math.min(0,vehicle.speed+15*dt);
+  else vehicle.speed+=engineForce*(vehicle.shiftTimer>0?.55:1)*dt;
+ }
+ // ABS limits wheel lock on hard braking, with a small dashboard indicator.
+ const brakeDemand=brake?1:0,brakeGrip=clamp(grip*(onRoad?1:.72),.34,1);
+ vehicle.absActive=!!(brake&&absSpeed>5&&brakeGrip<.92);
+ const brakeForce=brake?20*(vehicle.absActive?.72:1):0;
+ if(brakeForce){
+  if(vehicle.speed>0)vehicle.speed=Math.max(0,vehicle.speed-brakeForce*dt);
+  else if(vehicle.speed<0)vehicle.speed=Math.min(0,vehicle.speed+brakeForce*dt);
+  if(absSpeed<.7&&gas)vehicle.speed=Math.max(-10,vehicle.speed-7*dt);
+ }else if(gas&&vehicle.speed<0)vehicle.speed=Math.min(0,vehicle.speed+15*dt);
  const rolling=vehicle.speed*(onRoad?.11:.48),aero=Math.sign(vehicle.speed)*vehicle.speed*vehicle.speed*(onRoad?.0018:.0038);
  vehicle.speed-=(rolling+aero)*dt;
- if(controls.hand){vehicle.speed*=Math.pow(.91,dt*60);vehicle.slip=steer*absSpeed*.075/Math.max(.6,grip)}
- else{vehicle.slip=THREE.MathUtils.damp(vehicle.slip,0,dt,2.8);vehicle.speed*=Math.pow(onRoad?.999:.996,dt*60)}
+ // Handbrake breaks rear traction; lateral inertia creates a controlled, recoverable drift.
+ if(controls.hand&&absSpeed>2){
+  vehicle.lateralSpeed+=steer*absSpeed*.34*dt/Math.max(.5,grip);
+  vehicle.speed*=Math.pow(.91,dt*60);
+ }else vehicle.lateralSpeed=THREE.MathUtils.damp(vehicle.lateralSpeed,0,dt,2.2+grip*2.4);
+ vehicle.lateralSpeed=clamp(vehicle.lateralSpeed,-Math.max(2,absSpeed*.42),Math.max(2,absSpeed*.42));
+ vehicle.slip=clamp(vehicle.lateralSpeed/Math.max(5,absSpeed),-.65,.65);
  vehicle.speed=clamp(vehicle.speed,-10,maxSpeed);
  vehicle.steer=THREE.MathUtils.damp(vehicle.steer,steer,dt,7);
  const steerAngle=vehicle.steer*.56*clamp(1-absSpeed/65,.32,1);
  const yawRate=(vehicle.speed/2.85)*Math.tan(steerAngle)*clamp(grip,.45,1.25);
- player.rotation.y-=yawRate*dt;player.rotation.y+=vehicle.slip*dt*.42;
+ player.rotation.y-=yawRate*dt;player.rotation.y+=vehicle.slip*dt*(controls.hand?1.35:.42);
  const forward=new THREE.Vector3(-Math.sin(player.rotation.y),0,-Math.cos(player.rotation.y));
+ const right=new THREE.Vector3(Math.cos(player.rotation.y),0,-Math.sin(player.rotation.y));
  player.position.addScaledVector(forward,vehicle.speed*dt);
+ player.position.addScaledVector(right,vehicle.lateralSpeed*dt);
  let hit=false;
  for(const b of city.buildings){if(Math.abs(player.position.x-b.x)>b.w/2+2.2||Math.abs(player.position.z-b.z)>b.d/2+2.8)continue;player.position.x=oldX;player.position.z=oldZ;hit=true;break}
  if(!hit){for(const o of city.obstacles){const dx=player.position.x-o.x,dz=player.position.z-o.z,d=Math.hypot(dx,dz),min=o.r+1.55;if(d<min){player.position.x=o.x+dx/(d||1)*min;player.position.z=o.z+dz/(d||1)*min;hit=true;break}}}
- if(hit){vehicle.damage=clamp(vehicle.damage+Math.max(1,absSpeed*.045),0,100);vehicle.speed*=-.18;vibrate(45)}
+ if(hit){vehicle.damage=clamp(vehicle.damage+Math.max(1,absSpeed*.045),0,100);vehicle.speed*=-.18;vehicle.lateralSpeed*= -.2;vibrate(45)}
  player.position.x=clamp(player.position.x,-1370,1370);player.position.z=clamp(player.position.z,-1370,1370);
- for(const ped of city.peds){const d=Math.hypot(player.position.x-ped.g.position.x,player.position.z-ped.g.position.z);if(d<4.2&&absSpeed>1){player.position.x=oldX;player.position.z=oldZ;vehicle.speed*=.25;if(elapsed-lastFine>3){save.money=Math.max(0,save.money-25);lastFine=elapsed;toast("توقفت لتجنب أحد المارة: -25 ◈")}break}}
+ for(const ped of city.peds){const d=Math.hypot(player.position.x-ped.g.position.x,player.position.z-ped.g.position.z);if(d<4.2&&absSpeed>1){player.position.x=oldX;player.position.z=oldZ;vehicle.speed*=.25;vehicle.lateralSpeed=0;if(elapsed-lastFine>3){save.money=Math.max(0,save.money-25);lastFine=elapsed;toast("توقفت لتجنب أحد المارة: -25 ◈")}break}}
  for(const sig of signals){const d=Math.hypot(player.position.x-(sig.x+9),player.position.z-(sig.z+9));if(d<11&&absSpeed>5&&sig.lamp.material.color.getHex()===0xe34b45&&elapsed-lastFine>3){save.money=Math.max(0,save.money-35);lastFine=elapsed;toast("تجاوز إشارة حمراء: -35 ◈")}}
- for(const car of city.traffic){if(player.position.distanceTo(car.g.position)<3.2){vehicle.damage=clamp(vehicle.damage+absSpeed*.055,0,100);vehicle.speed*=-.22;car.speed*=.55;vibrate(70)}}
- vehicle.tireWear=clamp((vehicle.tireWear||0)+dt*(.0005+Math.abs(vehicle.slip)*.0009+(controls.hand?.002:0)),0,100);
- vehicle.rpm=900+absSpeed*225;vehicle.gear=clamp(Math.floor(absSpeed/9)+1,1,7);
- vehicle.fuel=Math.max(0,vehicle.fuel-dt*(.009+absSpeed*.00065)*(1-save.upgrades.tank*.12));if(vehicle.fuel<=0)vehicle.speed*=Math.pow(.93,dt*60);
+ for(const car of city.traffic){if(player.position.distanceTo(car.g.position)<3.2){vehicle.damage=clamp(vehicle.damage+absSpeed*.055,0,100);vehicle.speed*=-.22;vehicle.lateralSpeed*= -.2;car.speed*=.55;vibrate(70)}}
+ const longitudinalAccel=(vehicle.speed-previousSpeed)/Math.max(dt,.001);
+ vehicle.accelG=THREE.MathUtils.damp(vehicle.accelG,longitudinalAccel,dt,5);
+ vehicle.tireWear=clamp((vehicle.tireWear||0)+dt*(.0005+Math.abs(vehicle.slip)*.0014+(controls.hand?.0025:0)+(vehicle.absActive?.0008:0)),0,100);
  if(vehicle.damage>90)vehicle.broken=true;
- for(let i=0;i<wheelMeshes.length;i++){const w=wheelMeshes[i];w.rotation.x+=vehicle.speed*dt*1.9;if(i<2)w.rotation.y=vehicle.steer*.48}
- player.rotation.z=THREE.MathUtils.damp(player.rotation.z,-vehicle.steer*Math.min(1,absSpeed/18)*.09*(controls.hand?1.8:1),dt,5);
- player.rotation.x=THREE.MathUtils.damp(player.rotation.x,gas?-.035:brake?.055:0,dt,4);
- player.position.y=THREE.MathUtils.damp(player.position.y,Math.sin(elapsed*10)*Math.min(.055,absSpeed*.0012)+(hit?.025:0),dt,8);
+ // Each wheel gets independent spring travel and steering; body pitch/roll visualise weight transfer.
+ for(let i=0;i<wheelMeshes.length;i++){
+  const w=wheelMeshes[i],front=i<2,rear=i>=2,side=i%2===0?-1:1;
+  w.rotation.x+=vehicle.speed*dt*1.9;
+  if(front)w.rotation.y=vehicle.steer*.48;
+  const brakingLoad=brake?-.11:0,driveLoad=gas?.065:0,cornerLoad=vehicle.steer*side*clamp(absSpeed/35,0,1)*.075;
+  const bump=Math.sin(elapsed*8+(front?0:1.7)+side)*Math.min(.025,absSpeed*.0005);
+  w.position.y=.5+brakingLoad+driveLoad+cornerLoad+bump;
+ }
+ const targetRoll=-vehicle.steer*Math.min(1,absSpeed/18)*.075-vehicle.slip*.06;
+ const targetPitch=clamp(-vehicle.accelG*.0045,-.075,.085);
+ player.rotation.z=THREE.MathUtils.damp(player.rotation.z,targetRoll,dt,4.8);
+ player.rotation.x=THREE.MathUtils.damp(player.rotation.x,targetPitch,dt,5.2);
+ player.position.y=THREE.MathUtils.damp(player.position.y,Math.sin(elapsed*10)*Math.min(.045,absSpeed*.0009)+(hit?.025:0),dt,8);
+ vehicle.fuel=Math.max(0,vehicle.fuel-dt*(.009+absSpeed*.00065+(gas?.0025:0))*(1-save.upgrades.tank*.12));if(vehicle.fuel<=0)vehicle.speed*=Math.pow(.93,dt*60);
  for(let i=0;i<smokeParts.length;i++){const sm=smokeParts[i];sm.visible=vehicle.damage>48;sm.position.set(player.position.x+Math.sin(elapsed*1.5+i)*.35,1.25+i*.35,player.position.z-2.5-i*.2);sm.scale.setScalar(1+i*.2)}
  const bed=player.position.clone().add(new THREE.Vector3(0,1.3,1.8).applyAxisAngle(new THREE.Vector3(0,1,0),player.rotation.y));cargoMeshes.forEach(c=>{c.position.set(bed.x,bed.y,bed.z);c.rotation.y=player.rotation.y});
  for(const item of carried){item.position.x=item.userData.homeX+vehicle.steer*.13;item.rotation.z=-vehicle.steer*.08}
- if(engineOsc&&audio){engineOsc.osc.frequency.setTargetAtTime(48+vehicle.rpm/95,audio.currentTime,.08);engineOsc.gain.gain.setTargetAtTime(muted?0:.008+absSpeed*.0005,audio.currentTime,.1)}
+ if(engineOsc&&audio){engineOsc.osc.frequency.setTargetAtTime(42+vehicle.rpm/78,audio.currentTime,.08);engineOsc.gain.gain.setTargetAtTime(muted?0:.008+absSpeed*.0005+(gas?.002:0),audio.currentTime,.1)}
 }
 function updateTraffic(dt){for(const c of city.traffic){const g=c.g;let target=c.speed;const signal=signals.find(s=>Math.hypot(s.x-g.position.x,s.z-g.position.z)<12);if(signal&&signal.lamp.material.color.getHex()===0xe34b45)target=0;for(const p of city.peds){if(Math.hypot(p.g.position.x-g.position.x,p.g.position.z-g.position.z)<4.6){target=0;break}}let nearest=Infinity;for(const other of city.traffic){if(other===c||other.axis!==c.axis||other.dir!==c.dir||Math.abs(other.lane-c.lane)>1.25)continue;let gap=c.axis==="x"?(other.g.position.x-g.position.x)*c.dir:(other.g.position.z-g.position.z)*c.dir;if(gap<=0)gap+=880;if(gap>0&&gap<nearest)nearest=gap}if(nearest<28)target=Math.min(target,Math.max(0,(nearest-5)*.72));const playerPos=onFoot?walker.position:player.position;if(g.position.distanceTo(playerPos)<8)target=Math.min(target,Math.max(3,c.speed*.55));const braking=target<c.currentSpeed-.35;c.currentSpeed=THREE.MathUtils.damp(c.currentSpeed,target,braking?7:2.2,dt);const v=c.currentSpeed*c.dir*dt;if(c.axis==="x"){g.position.x+=v;g.rotation.y=c.dir>0?-Math.PI/2:Math.PI/2;if(g.position.x>440)g.position.x=-440;if(g.position.x< -440)g.position.x=440}else{g.position.z+=v;g.rotation.y=c.dir>0?Math.PI:0;if(g.position.z>440)g.position.z=-440;if(g.position.z< -440)g.position.z=440}for(const lamp of c.brakeLights)lamp.material.color.setHex(braking?0xff3024:0x721b18)}}
 function updatePeds(dt){const target=onFoot?walker.position:player.position;for(let p of city.peds){let d=Math.hypot(target.x-p.g.position.x,target.z-p.g.position.z);if(d<9){p.wait=.6;p.dir=Math.atan2(p.g.position.x-target.x,p.g.position.z-target.z)}if(p.wait>0)p.wait-=dt;else{p.g.position.x+=Math.sin(p.dir)*p.speed*dt;p.g.position.z+=Math.cos(p.dir)*p.speed*dt}if(Math.abs(p.g.position.x)>430||Math.abs(p.g.position.z)>430)p.dir+=Math.PI;p.g.rotation.y=p.dir;p.phase+=dt*(p.wait>0?1.5:7);const swing=p.wait>0?0:Math.sin(p.phase)*.48;p.legs.forEach((l,i)=>l.rotation.x=(i===0?1:-1)*swing);p.arms.forEach((a,i)=>a.rotation.x=(i===0?-1:1)*swing*.7)}}
