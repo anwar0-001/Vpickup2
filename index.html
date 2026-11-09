@@ -115,6 +115,29 @@ function sculptedTerrain(g,cx,cz,w,d,seed,amplitude=5,base=0x687b58){
  const terrain=regionMesh(g,geo,material,cx,-.08,cz);terrain.receiveShadow=true;terrain.castShadow=false;return terrain;
 }
 function regionRoad(x,z,w,d){road(x,z,w,d)}
+// Phase 10: roadside details and a stepped mountain-pass route.
+function ruralRoad(x,z,w,d,edgePosts=true){
+ regionRoad(x,z,w,d);
+ if(!edgePosts)return;
+ const horizontal=w>d,span=horizontal?w:d,half=(horizontal?d:w)/2+2.1;
+ for(const side of [-1,1]){
+  const count=Math.max(2,Math.floor(span/34));
+  for(let i=0;i<=count;i++){
+   const t=-span/2+span*i/count,px=x+(horizontal?t:side*half),pz=z+(horizontal?side*half:t);
+   mesh(new THREE.BoxGeometry(.22,.9,.22),mat(0x68716f),px,.48,pz);
+  }
+  const rail=mesh(new THREE.BoxGeometry(horizontal?span:.18,.18,horizontal?.18:span),mat(0x9a9f99),x,1.05+(side*.02),z+(horizontal?side*half:0));
+  if(!horizontal)rail.position.x=x+side*half;
+ }
+}
+function bridgeSpan(x,z,length,width=18){
+ // Raised deck, parapets and piers; road metadata remains aligned to the existing route.
+ mesh(new THREE.BoxGeometry(width,.55,length),mat(0x666e70),x,.16,z);
+ for(const side of [-1,1]){
+  mesh(new THREE.BoxGeometry(.42,1.15,length),mat(0x858d8b),x+side*(width/2-.35),.95,z);
+  for(let k=-1;k<=1;k++)mesh(new THREE.BoxGeometry(.55,2.8,.55),mat(0x596365),x+side*(width/2-.35),-1.25,z+k*length/3);
+ }
+}
 // Outer highways tie the existing downtown grid to every remote district.
 regionRoad(0,-1120,2200,18);regionRoad(0,1120,2200,18);regionRoad(0,0,2700,20);
 regionRoad(-1120,0,18,2200);regionRoad(1120,0,18,2200);
@@ -167,7 +190,16 @@ regionRoad(-720,0,13,1450);regionRoad(720,0,13,1450);
  flatPatch(g,0,0,950,620,0x66794d);
  sculptedTerrain(g,0,35,880,540,9127,9.5,0x68795b);
  for(let i=0;i<17;i++){let x=-420+i*52,z=rand(-190,190),h=rand(95,220),r=rand(48,105);const peak=regionMesh(g,new THREE.ConeGeometry(r,h,7),mat(choose([0x64715d,0x7b806c,0x8b8c7b])),x,h/2-4,z);peak.rotation.z=rand(-.12,.12);if(i%4===0)regionMesh(g,new THREE.ConeGeometry(r*.43,h*.25,7),mat(0xd6d8d0),x,h*.88,z)}
- regionRoad(-820,1050,720,12);
+ // A stepped switchback spur links the lower foothills to the existing mountain road.
+ ruralRoad(-820,760,460,12);
+ ruralRoad(-590,860,12,212);
+ ruralRoad(-820,960,460,12);
+ ruralRoad(-1050,1005,12,102);
+ ruralRoad(-820,1050,720,12);
+ // Small turnout at the pass for a safe scenic stop.
+ regionMesh(g,new THREE.BoxGeometry(54,.12,28),mat(0x555d5c),-365,.03,-185);
+ for(const x of [-387,-365,-343])regionMesh(g,new THREE.BoxGeometry(1,.8,1),mat(0xe6d8a5),x,.5,-170);
+ city.landmarks.push({name:"ممر جبلي متعرج",x:-820,z:860});
  city.landmarks.push({name:"جبال الشمال",x:-820,z:1050});
 }
 // Desert and dunes.
@@ -186,13 +218,20 @@ regionRoad(-720,0,13,1450);regionRoad(720,0,13,1450);
  sculptedTerrain(g,-55,0,650,250,2241,1.6,0xd9c28e);
  const sea=regionMesh(g,new THREE.PlaneGeometry(240,520),mats.water,420,-.08,0);sea.rotation.x=-Math.PI/2;
  for(const [x,z,r] of [[300,-150,32],[380,120,24],[475,-20,18]]){const island=regionMesh(g,new THREE.ConeGeometry(r,24,8),mat(0x617a4e),x,10,z);island.rotation.x=.08}
- regionRoad(820,390,600,12);
+ // Coastal access road with a widened lookout and marked junction.
+ ruralRoad(820,390,600,12);
+ ruralRoad(1090,505,12,230);
+ ruralRoad(970,620,250,12);
+ regionMesh(g,new THREE.BoxGeometry(62,.1,34),mat(0x777b75),240,.02,115);
  city.landmarks.push({name:"شاطئ المرجان",x:820,z:390});
 }
 // Additional road connectors and bridge decks to make the distant areas reachable.
 regionRoad(720,-700,18,520);regionRoad(930,-700,520,18);
 regionRoad(720,900,18,520);regionRoad(930,900,520,18);regionRoad(930,320,620,12);
 regionRoad(-900,390,18,620);regionRoad(-900,1050,620,18);
+// A short elevated crossing on the eastern coastal connector.
+bridgeSpan(930,320,190,18);
+regionRoad(930,320,18,190);
 
 // Street lights, traffic signals and street props
 for(let n=-4;n<=4;n++)for(let s of [-1,1]){let x=n*100+s*12,z=-430;let pole=mesh(new THREE.CylinderGeometry(.16,.22,8,6),mat(0x424c4e),x,4,z);mesh(new THREE.SphereGeometry(.5,8,6),mat(0xffe7a2,.4),x,8,z);city.lamps.push({light:null,x,z})}
