@@ -501,11 +501,13 @@ function physics(dt){
  const brakeDemand=brake?1:0,brakeGrip=clamp(grip*(onRoad?1:.72),.34,1);
  vehicle.absActive=!!(brake&&absSpeed>5&&brakeGrip<.92);
  const brakeForce=brake?20*(vehicle.absActive?.72:1):0;
- if(brakeForce){
-  if(vehicle.speed>0)vehicle.speed=Math.max(0,vehicle.speed-brakeForce*dt);
-  else if(vehicle.speed<0)vehicle.speed=Math.min(0,vehicle.speed+brakeForce*dt);
-  if(absSpeed<.7&&gas)vehicle.speed=Math.max(-10,vehicle.speed-7*dt);
- }else if(gas&&vehicle.speed<0)vehicle.speed=Math.min(0,vehicle.speed+15*dt);
+ if(brakeForce&&vehicle.speed>0){
+  vehicle.speed=Math.max(0,vehicle.speed-brakeForce*dt);
+ }else if(brake&&vehicle.speed<=0){
+  // The brake pedal doubles as reverse once the vehicle has stopped.
+  vehicle.speed=Math.max(-10,vehicle.speed-7*dt);
+ }
+ if(gas&&vehicle.speed<0)vehicle.speed=Math.min(0,vehicle.speed+15*dt);
  const rolling=vehicle.speed*(onRoad?.11:.48),aero=Math.sign(vehicle.speed)*vehicle.speed*vehicle.speed*(onRoad?.0018:.0038);
  vehicle.speed-=(rolling+aero)*dt;
  // Handbrake breaks rear traction; lateral inertia creates a controlled, recoverable drift.
