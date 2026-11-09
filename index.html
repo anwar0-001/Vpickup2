@@ -97,6 +97,23 @@ for(let i=0;i<35;i++){let x=rand(-460,460),z=choose([-490,490]);mesh(new THREE.S
 function region(name,x,z,radius,color){const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);city.regions.push({name,x,z,radius,group:g});return g}
 function regionMesh(g,geo,material,x,y,z){return mesh(geo,material,x,y,z,g)}
 function flatPatch(g,x,z,w,d,color){const o=regionMesh(g,new THREE.PlaneGeometry(w,d),mat(color),x,-.12,z);o.rotation.x=-Math.PI/2;return o}
+// Phase 9: lightweight sculpted terrain patches. A modest grid keeps mobile GPU cost predictable.
+function sculptedTerrain(g,cx,cz,w,d,seed,amplitude=5,base=0x687b58){
+ const seg=28,geo=new THREE.PlaneGeometry(w,d,seg,seg),pos=geo.attributes.position;
+ let state=seed>>>0;const noise=()=>{state=(state*1664525+1013904223)>>>0;return state/4294967296};
+ const peaks=Array.from({length:5},()=>({x:(noise()-.5)*w*.72,z:(noise()-.5)*d*.72,r:35+noise()*90,h:.35+noise()*.65}));
+ const colors=[];
+ for(let i=0;i<pos.count;i++){
+  const x=pos.getX(i),z=pos.getY(i);let h=Math.sin((x+seed%37)*.012)*Math.cos((z-seed%29)*.015)*amplitude*.22;
+  for(const p of peaks){const q=Math.exp(-((x-p.x)**2+(z-p.z)**2)/(p.r*p.r));h+=q*amplitude*p.h}
+  h=Math.max(-.5,h);pos.setZ(i,h);
+  const shade=THREE.MathUtils.clamp(.86+h/(amplitude*5),.72,1.12),c=new THREE.Color(base).multiplyScalar(shade);
+  colors.push(c.r,c.g,c.b);
+ }
+ geo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();geo.rotateX(-Math.PI/2);
+ const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.98,flatShading:false});
+ const terrain=regionMesh(g,geo,material,cx,-.08,cz);terrain.receiveShadow=true;terrain.castShadow=false;return terrain;
+}
 function regionRoad(x,z,w,d){road(x,z,w,d)}
 // Outer highways tie the existing downtown grid to every remote district.
 regionRoad(0,-1120,2200,18);regionRoad(0,1120,2200,18);regionRoad(0,0,2700,20);
@@ -138,6 +155,7 @@ regionRoad(-720,0,13,1450);regionRoad(720,0,13,1450);
 {
  const g=region("غابة الصنوبر",-1000,-850,600,0x315b3c);
  flatPatch(g,0,0,850,780,0x3e6843);
+ sculptedTerrain(g,0,0,760,690,4109,3.8,0x496d45);
  const count=190,dummy=new THREE.Object3D(),tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.45,.65,5,6),mats.trunk,count),leaves=new THREE.InstancedMesh(new THREE.ConeGeometry(4.5,13,7),mats.leaf,count);
  for(let i=0;i<count;i++){let x=rand(-390,390),z=rand(-350,350);if(Math.abs(x)<75&&Math.abs(z)<75)x+=130;dummy.position.set(x,2.5,z);dummy.updateMatrix();tr.setMatrixAt(i,dummy.matrix);dummy.position.set(x,10,z);dummy.scale.setScalar(rand(.7,1.35));dummy.updateMatrix();leaves.setMatrixAt(i,dummy.matrix);city.obstacles.push({x:-1000+x,z:-850+z,r:1.5,type:"tree"})}
  tr.castShadow=true;leaves.castShadow=true;g.add(tr,leaves);
@@ -147,6 +165,7 @@ regionRoad(-720,0,13,1450);regionRoad(720,0,13,1450);
 {
  const g=region("جبال الشمال",-820,1050,620,0x71805c);
  flatPatch(g,0,0,950,620,0x66794d);
+ sculptedTerrain(g,0,35,880,540,9127,9.5,0x68795b);
  for(let i=0;i<17;i++){let x=-420+i*52,z=rand(-190,190),h=rand(95,220),r=rand(48,105);const peak=regionMesh(g,new THREE.ConeGeometry(r,h,7),mat(choose([0x64715d,0x7b806c,0x8b8c7b])),x,h/2-4,z);peak.rotation.z=rand(-.12,.12);if(i%4===0)regionMesh(g,new THREE.ConeGeometry(r*.43,h*.25,7),mat(0xd6d8d0),x,h*.88,z)}
  regionRoad(-820,1050,720,12);
  city.landmarks.push({name:"جبال الشمال",x:-820,z:1050});
@@ -155,6 +174,7 @@ regionRoad(-720,0,13,1450);regionRoad(720,0,13,1450);
 {
  const g=region("صحراء الرمال",940,900,620,0xb99a5d);
  flatPatch(g,0,0,900,700,0xb99a5d);
+ sculptedTerrain(g,0,0,820,620,7731,2.8,0xb99a5d);
  for(let i=0;i<34;i++){let x=rand(-420,420),z=rand(-310,310),r=rand(20,58);const dune=regionMesh(g,new THREE.SphereGeometry(1,9,6),mat(choose([0xc9aa70,0xd3b77d,0xa98b56])),x,-5,z);dune.scale.set(r*.95,r*.28,r*.58)}
  for(let i=0;i<26;i++){let x=rand(-400,400),z=rand(-300,300);regionMesh(g,new THREE.DodecahedronGeometry(rand(2,6),0),mat(0x77705f),x,2,z)}
  city.landmarks.push({name:"صحراء الرمال",x:940,z:900});
@@ -163,6 +183,7 @@ regionRoad(-720,0,13,1450);regionRoad(720,0,13,1450);
 {
  const g=region("شاطئ المرجان",820,390,500,0xdbc28b);
  flatPatch(g,0,0,760,330,0xd9c28e);
+ sculptedTerrain(g,-55,0,650,250,2241,1.6,0xd9c28e);
  const sea=regionMesh(g,new THREE.PlaneGeometry(240,520),mats.water,420,-.08,0);sea.rotation.x=-Math.PI/2;
  for(const [x,z,r] of [[300,-150,32],[380,120,24],[475,-20,18]]){const island=regionMesh(g,new THREE.ConeGeometry(r,24,8),mat(0x617a4e),x,10,z);island.rotation.x=.08}
  regionRoad(820,390,600,12);
