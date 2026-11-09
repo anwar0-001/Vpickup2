@@ -317,9 +317,9 @@ function vehicleBuild(){
  // Wheel assemblies with metallic hubs, lug details and upper arch guards.
  for(let x of [-1.27,1.27])for(let z of [-1.5,1.5]){
   let w=mesh(new THREE.CylinderGeometry(.49,.49,.34,18),rubber,x,.5,z,player);w.rotation.z=Math.PI/2;wheelMeshes.push(w);
-  let hub=mesh(new THREE.CylinderGeometry(.27,.27,.355,16),chrome,x,.5,z,player);hub.rotation.z=Math.PI/2;wheelMeshes.push(hub);
-  let cap=mesh(new THREE.CylinderGeometry(.105,.105,.37,12),dark,x,.5,z,player);cap.rotation.z=Math.PI/2;wheelMeshes.push(cap);
-  for(let k=0;k<6;k++){const a=k*Math.PI/3;let lug=mesh(new THREE.SphereGeometry(.035,6,5),chrome,x+Math.sign(x)*.185,.5+Math.sin(a)*.18,z+Math.cos(a)*.18,player);wheelMeshes.push(lug)}
+  let hub=mesh(new THREE.CylinderGeometry(.27,.27,.355,16),chrome,x,.5,z,player);hub.rotation.z=Math.PI/2;
+  let cap=mesh(new THREE.CylinderGeometry(.105,.105,.37,12),dark,x,.5,z,player);cap.rotation.z=Math.PI/2;
+  for(let k=0;k<6;k++){const a=k*Math.PI/3;mesh(new THREE.SphereGeometry(.035,6,5),chrome,x+Math.sign(x)*.185,.5+Math.sin(a)*.18,z+Math.cos(a)*.18,player)}
   const arch=part(new THREE.TorusGeometry(.55,.085,6,20,Math.PI),dark,x,.52,z);arch.rotation.set(0,Math.PI/2,0);
  }
  // Pickup cargo bed: textured-looking floor, raised side walls, rails and tailgate.
