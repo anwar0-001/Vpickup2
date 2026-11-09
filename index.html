@@ -126,13 +126,15 @@ function ruralRoad(x,z,w,d,edgePosts=true){
    const t=-span/2+span*i/count,px=x+(horizontal?t:side*half),pz=z+(horizontal?side*half:t);
    mesh(new THREE.BoxGeometry(.22,.9,.22),mat(0x68716f),px,.48,pz);
   }
-  const rail=mesh(new THREE.BoxGeometry(horizontal?span:.18,.18,horizontal?.18:span),mat(0x9a9f99),x,1.05+(side*.02),z+(horizontal?side*half:0));
+  const rail=mesh(new THREE.BoxGeometry(horizontal ? span : 0.18,0.18,horizontal ? 0.18 : span),mat(0x9a9f99),x,1.05+(side*.02),z+(horizontal?side*half:0));
   if(!horizontal)rail.position.x=x+side*half;
  }
 }
 function bridgeSpan(x,z,length,width=18){
  // Raised deck, parapets and piers; road metadata remains aligned to the existing route.
- mesh(new THREE.BoxGeometry(width,.55,length),mat(0x666e70),x,.16,z);
+ mesh(new THREE.BoxGeometry(width,.12,length),mat(0x666e70),x,.06,z);
+ mesh(new THREE.BoxGeometry(.18,.025,length-8),mats.line,x,.135,z);
+ city.roads.push({x,z,w:width,d:length});
  for(const side of [-1,1]){
   mesh(new THREE.BoxGeometry(.42,1.15,length),mat(0x858d8b),x+side*(width/2-.35),.95,z);
   for(let k=-1;k<=1;k++)mesh(new THREE.BoxGeometry(.55,2.8,.55),mat(0x596365),x+side*(width/2-.35),-1.25,z+k*length/3);
@@ -231,7 +233,6 @@ regionRoad(720,900,18,520);regionRoad(930,900,520,18);regionRoad(930,320,620,12)
 regionRoad(-900,390,18,620);regionRoad(-900,1050,620,18);
 // A short elevated crossing on the eastern coastal connector.
 bridgeSpan(930,320,190,18);
-regionRoad(930,320,18,190);
 
 // Street lights, traffic signals and street props
 for(let n=-4;n<=4;n++)for(let s of [-1,1]){let x=n*100+s*12,z=-430;let pole=mesh(new THREE.CylinderGeometry(.16,.22,8,6),mat(0x424c4e),x,4,z);mesh(new THREE.SphereGeometry(.5,8,6),mat(0xffe7a2,.4),x,8,z);city.lamps.push({light:null,x,z})}
