@@ -63,6 +63,7 @@ The repository root now also contains a standalone browser edition in `index.htm
 - Garage upgrades for engine, grip, fuel tank and cargo; local browser save and migration of the earlier web game's coin balance when available.
 - Chase, hood and cinematic camera modes, mobile touch controls, keyboard controls, minimap/full map with a route line, Low/Medium/High quality presets and optional FPS counter.
 - On-foot third-person character mode: safely exit only after stopping, walk and turn with the same touch/keyboard controls, re-enter near the parked vehicle, and use nearby fuel, repair and garage services while on foot.
+- Walk to mission parcels and the delivery hub to collect and complete contracts on foot; carried parcels transfer between the character and vehicle. The full map and minimap follow whichever mode is active.
 - Original pedestrian character geometry with simple limb animation, walking collision against trees/rocks, pedestrian avoidance, added vehicle body details, rotating wheels and visible body roll/pitch under steering and braking.
 - Web Audio generated engine tone, a simple synthesized radio melody loop and UI effects, plus vibration feedback where supported.
 
