@@ -23,7 +23,7 @@
 <body>
 <canvas id="game"></canvas>
 <div id="hud">
-<div class="stat"><small>الرصيد</small><b id="money">0</b></div><div class="stat"><small>الوقود</small><b id="fuel">100%</b></div><div class="stat"><small>السرعة</small><b id="speed">0 km/h</b></div><div class="stat"><small>الضرر</small><b id="damage">0%</b></div><div class="stat"><small>الوقت</small><b id="clock">08:00</b></div>
+<div class="stat"><small>الرصيد</small><b id="money">0</b></div><div class="stat"><small>الوقود</small><b id="fuel">100%</b></div><div class="stat"><small>السرعة</small><b id="speed">0 km/h</b></div><div class="stat"><small>الضرر</small><b id="damage">0%</b></div><div class="stat"><small>الوقت</small><b id="clock">08:00</b></div><div class="stat"><small>المنطقة</small><b id="region">وسط المدينة</b></div>
 </div>
 <div id="mission">المهمة: <b id="objective">استكشف المدينة</b></div>
 <div id="top"><button id="pause">Ⅱ</button><button id="mapBtn">الخريطة</button><button id="cameraBtn">📷</button><button id="qualityBtn">Q: M</button></div>
@@ -49,8 +49,8 @@ const sun=new THREE.DirectionalLight(0xffedcf,2.0);sun.position.set(-120,180,80)
 const mat=(c,r=.86,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
 const mats={grass:mat(0x617c4e),road:mat(0x353b40,.94),side:mat(0xaaa99d),line:mat(0xd8d0ad),water:mat(0x347d91,.24,.25),trunk:mat(0x634a35),leaf:mat(0x315d3c),glass:mat(0x6e9da8,.28,.35),tire:mat(0x171b1d),white:mat(0xd8d6ca),yellow:mat(0xe9bc52)};
 function mesh(geo,material,x,y,z,parent=scene){const o=new THREE.Mesh(geo,material);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
-const ground=mesh(new THREE.PlaneGeometry(1100,1100),mats.grass,0,-.18,0);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
-const city={size:900,roadGap:100,roads:[],buildings:[],obstacles:[],traffic:[],peds:[],lamps:[],stations:[],shops:[],landmarks:[]};
+const ground=mesh(new THREE.PlaneGeometry(3000,3000),mats.grass,0,-.18,0);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
+const city={size:2800,roadGap:100,roads:[],buildings:[],obstacles:[],traffic:[],peds:[],lamps:[],stations:[],shops:[],landmarks:[],regions:[]};
 const roadMatWet=mat(0x252f35,.35,.25);
 function road(x,z,w,d){mesh(new THREE.BoxGeometry(w,.12,d),mats.road,x,0,z);if(w>d){for(let xx=x-w/2+4;xx<x+w/2-2;xx+=12)mesh(new THREE.BoxGeometry(5,.025,.18),mats.line,xx,.075,z)}else{for(let zz=z-d/2+4;zz<z+d/2-2;zz+=12)mesh(new THREE.BoxGeometry(.18,.025,5),mats.line,x,.075,zz)}if(w>d){mesh(new THREE.BoxGeometry(w,.16,2.2),mats.side,x,.02,z-w/2-1.8);mesh(new THREE.BoxGeometry(w,.16,2.2),mats.side,x,.02,z+w/2+1.8)}else{mesh(new THREE.BoxGeometry(2.2,.16,d),mats.side,x-w/2-1.8,.02,z);mesh(new THREE.BoxGeometry(2.2,.16,d),mats.side,x+w/2+1.8,.02,z)}city.roads.push({x,z,w,d})}
 for(let n=-4;n<=4;n++){road(n*100,0,14,900);road(0,n*100,900,14)}
@@ -62,10 +62,91 @@ for(let i=0;i<350;i++){let x=rand(-430,430),z=rand(-430,430);if(Math.abs(x%100)<
 const treeDummy=new THREE.Object3D(),trunkInstances=new THREE.InstancedMesh(new THREE.CylinderGeometry(.35,.48,3,7),mats.trunk,treeInstances.length),leafInstances=new THREE.InstancedMesh(new THREE.SphereGeometry(2.2,7,6),mats.leaf,treeInstances.length);for(let i=0;i<treeInstances.length;i++){let t=treeInstances[i];treeDummy.position.set(t.x,1.5*t.s,t.z);treeDummy.scale.setScalar(t.s);treeDummy.updateMatrix();trunkInstances.setMatrixAt(i,treeDummy.matrix);treeDummy.position.set(t.x,4*t.s,t.z);treeDummy.updateMatrix();leafInstances.setMatrixAt(i,treeDummy.matrix)}trunkInstances.castShadow=true;leafInstances.castShadow=true;scene.add(trunkInstances,leafInstances);
 for(let i=0;i<90;i++){let x=rand(-430,430),z=rand(-430,430);if(Math.abs(x%100)<20||Math.abs(z%100)<20)continue;let r=rand(1.5,3);mesh(new THREE.DodecahedronGeometry(r,0),mat(0x777b78),x,r,z);city.obstacles.push({x,z,r:r+1,type:"rock"})}
 // Waterfront and bridge on eastern edge; highway corridor.
-mesh(new THREE.PlaneGeometry(180,1050),mats.water,470,-.12,0).rotation.x=-Math.PI/2;
-road(395,0,30,900);for(let z=-420;z<430;z+=25){mesh(new THREE.BoxGeometry(1,1.1,.8),mats.white,379,.7,z);mesh(new THREE.BoxGeometry(1,1.1,.8),mats.white,411,.7,z)}
+mesh(new THREE.PlaneGeometry(180,3000),mats.water,470,-.12,0).rotation.x=-Math.PI/2;
+road(395,0,30,2800);for(let z=-1375;z<1380;z+=25){mesh(new THREE.BoxGeometry(1,1.1,.8),mats.white,379,.7,z);mesh(new THREE.BoxGeometry(1,1.1,.8),mats.white,411,.7,z)}
 // Hill silhouettes in rural outskirts
 for(let i=0;i<35;i++){let x=rand(-460,460),z=choose([-490,490]);mesh(new THREE.SphereGeometry(rand(28,70),9,7),mat(choose([0x61784e,0x71865c,0x7c8c63])),x,-10,z).scale.y=rand(.45,.85)}
+
+// PHASE 1 — expanded procedural world regions and connecting routes.
+function region(name,x,z,radius,color){const g=new THREE.Group();scene.add(g);city.regions.push({name,x,z,radius,group:g});return g}
+function regionMesh(g,geo,material,x,y,z){return mesh(geo,material,x,y,z,g)}
+function flatPatch(g,x,z,w,d,color){const o=regionMesh(g,new THREE.PlaneGeometry(w,d),mat(color),x,-.12,z);o.rotation.x=-Math.PI/2;return o}
+function regionRoad(x,z,w,d){road(x,z,w,d)}
+// Outer highways tie the existing downtown grid to every remote district.
+regionRoad(0,-1120,2200,18);regionRoad(0,1120,2200,18);
+regionRoad(-1120,0,18,2200);regionRoad(1120,0,18,2200);
+regionRoad(0,-720,1450,13);regionRoad(0,720,1450,13);
+regionRoad(-720,0,13,1450);regionRoad(720,0,13,1450);
+// Airport: runway, taxiway, terminal and hangars.
+{
+ const g=region("مطار الساحل",930,-900,520,0x9da5a4);
+ flatPatch(g,0,0,720,520,0x78836e);
+ regionMesh(g,new THREE.BoxGeometry(560,.18,74),mat(0x343b40),0,.02,0);
+ regionMesh(g,new THREE.BoxGeometry(530,.035,1.4),mat(0xe8e5ce),0,.13,0);
+ for(let x=-245;x<=245;x+=28)regionMesh(g,new THREE.BoxGeometry(12,.035,.45),mat(0xf4f0d8),x,.14,0);
+ regionMesh(g,new THREE.BoxGeometry(170,.12,18),mat(0x555d60),0,.05,66);
+ for(const x of [-125,0,125]){const h=regionMesh(g,new THREE.BoxGeometry(92,15,58),mat(0x8d9998),x,7.5,150);regionMesh(g,new THREE.BoxGeometry(96,2,62),mat(0x46565a),x,16,150)}
+ const tower=regionMesh(g,new THREE.BoxGeometry(13,42,13),mat(0xb7c4c0),-245,21,150);
+ regionMesh(g,new THREE.BoxGeometry(22,8,22),mat(0x557f91),-245,43,150);
+ city.landmarks.push({name:"المطار",x:930,z:-900});
+}
+// Industrial docks, cranes and container yards.
+{
+ const g=region("الميناء الصناعي",930,120,520,0x6f7778);
+ flatPatch(g,0,0,720,520,0x777b70);
+ flatPatch(g,260,0,180,470,0x347d91);
+ for(let i=0;i<18;i++){const x=-260+(i%6)*88,z=-190+Math.floor(i/6)*150;regionMesh(g,new THREE.BoxGeometry(66,12,30),mat([0x9b5c43,0x4d7184,0xb09a58][i%3]),x,6,z)}
+ for(const x of [-80,100,270]){regionMesh(g,new THREE.BoxGeometry(5,62,5),mat(0x4a5354),x,31,-110);regionMesh(g,new THREE.BoxGeometry(100,4,4),mat(0x4a5354),x+42,60,-110);regionMesh(g,new THREE.BoxGeometry(4,28,4),mat(0x4a5354),x+84,46,-110)}
+ city.landmarks.push({name:"الميناء",x:930,z:120});
+}
+// Large freshwater lake with an island and a shoreline road.
+{
+ const g=region("بحيرة الزمرد", -900,390,520,0x347d91);
+ flatPatch(g,0,0,720,600,0x63794d);
+ const lake=regionMesh(g,new THREE.CircleGeometry(1,64),mat(0x2c8294,.22,.25),0,-.04,0);lake.rotation.x=-Math.PI/2;lake.scale.set(205,155,1);
+ const island=regionMesh(g,new THREE.CylinderGeometry(38,52,5,24),mat(0x637d4c),-25,1,18);regionMesh(g,new THREE.SphereGeometry(22,10,8),mat(0x496a42),-25,15,18);
+ for(let i=0;i<12;i++){const a=i*Math.PI/6,x=Math.cos(a)*225,z=Math.sin(a)*175;regionMesh(g,new THREE.ConeGeometry(5,20,7),mat(0x557b49),x,10,z)}
+ city.landmarks.push({name:"بحيرة الزمرد",x:-900,z:390});
+}
+// Dense forest, instanced trees for mobile-friendly rendering.
+{
+ const g=region("غابة الصنوبر",-1000,-850,600,0x315b3c);
+ flatPatch(g,0,0,850,780,0x3e6843);
+ const count=190,dummy=new THREE.Object3D(),tr=new THREE.InstancedMesh(new THREE.CylinderGeometry(.45,.65,5,6),mats.trunk,count),leaves=new THREE.InstancedMesh(new THREE.ConeGeometry(4.5,13,7),mats.leaf,count);
+ for(let i=0;i<count;i++){let x=rand(-390,390),z=rand(-350,350);if(Math.abs(x)<75&&Math.abs(z)<75)x+=130;dummy.position.set(x,2.5,z);dummy.updateMatrix();tr.setMatrixAt(i,dummy.matrix);dummy.position.set(x,10,z);dummy.scale.setScalar(rand(.7,1.35));dummy.updateMatrix();leaves.setMatrixAt(i,dummy.matrix);city.obstacles.push({x:-1000+x,z:-850+z,r:1.5,type:"tree"})}
+ tr.castShadow=true;leaves.castShadow=true;g.add(tr,leaves);
+ city.landmarks.push({name:"غابة الصنوبر",x:-1000,z:-850});
+}
+// Mountain range with ridges, foothill rocks and a scenic pass.
+{
+ const g=region("جبال الشمال",-820,1050,620,0x71805c);
+ flatPatch(g,0,0,950,620,0x66794d);
+ for(let i=0;i<17;i++){let x=-420+i*52,z=rand(-190,190),h=rand(95,220),r=rand(48,105);const peak=regionMesh(g,new THREE.ConeGeometry(r,h,7),mat(choose([0x64715d,0x7b806c,0x8b8c7b])),x,h/2-4,z);peak.rotation.z=rand(-.12,.12);if(i%4===0)regionMesh(g,new THREE.ConeGeometry(r*.43,h*.25,7),mat(0xd6d8d0),x,h*.88,z)}
+ regionRoad(-820,1050,720,12);
+ city.landmarks.push({name:"جبال الشمال",x:-820,z:1050});
+}
+// Desert and dunes.
+{
+ const g=region("صحراء الرمال",940,900,620,0xb99a5d);
+ flatPatch(g,0,0,900,700,0xb99a5d);
+ for(let i=0;i<34;i++){let x=rand(-420,420),z=rand(-310,310),r=rand(20,58);const dune=regionMesh(g,new THREE.SphereGeometry(1,9,6),mat(choose([0xc9aa70,0xd3b77d,0xa98b56])),x,-5,z);dune.scale.set(r*.95,r*.28,r*.58)}
+ for(let i=0;i<26;i++){let x=rand(-400,400),z=rand(-300,300);regionMesh(g,new THREE.DodecahedronGeometry(rand(2,6),0),mat(0x77705f),x,2,z)}
+ city.landmarks.push({name:"صحراء الرمال",x:940,z:900});
+}
+// Beach promenade and coastal islands beyond the channel.
+{
+ const g=region("شاطئ المرجان",820,390,500,0xdbc28b);
+ flatPatch(g,0,0,760,330,0xd9c28e);
+ const sea=regionMesh(g,new THREE.PlaneGeometry(240,520),mats.water,420,-.08,0);sea.rotation.x=-Math.PI/2;
+ for(const [x,z,r] of [[300,-150,32],[380,120,24],[475,-20,18]]){const island=regionMesh(g,new THREE.ConeGeometry(r,24,8),mat(0x617a4e),x,10,z);island.rotation.x=.08}
+ regionRoad(0,0,600,12);
+ city.landmarks.push({name:"شاطئ المرجان",x:820,z:390});
+}
+// Additional road connectors and bridge decks to make the distant areas reachable.
+regionRoad(720,-900,18,520);regionRoad(930,-900,520,18);
+regionRoad(720,900,18,520);regionRoad(930,900,520,18);
+regionRoad(-900,390,18,620);regionRoad(-900,1050,620,18);
+
 // Street lights, traffic signals and street props
 for(let n=-4;n<=4;n++)for(let s of [-1,1]){let x=n*100+s*12,z=-430;let pole=mesh(new THREE.CylinderGeometry(.16,.22,8,6),mat(0x424c4e),x,4,z);mesh(new THREE.SphereGeometry(.5,8,6),mat(0xffe7a2,.4),x,8,z);city.lamps.push({light:null,x,z})}
 const signals=[];for(let x=-400;x<=400;x+=100)for(let z=-400;z<=400;z+=100){if(Math.abs(x)>380||Math.abs(z)>380)continue;let pole=mesh(new THREE.CylinderGeometry(.12,.15,5,6),mat(0x303a3d),x+9,2.5,z+9);let bulb=mesh(new THREE.BoxGeometry(.5,1.5,.45),mat(0x29443a),x+9,5.4,z+9);let lamp=mesh(new THREE.SphereGeometry(.19,8,6),mat(0x38d27b,.4),x+9,5.4,z+9);signals.push({lamp,phase:Math.random()*10,x,z})}
@@ -144,12 +225,12 @@ toggleVehicle();return}let s=nearestService();if(s){if(s.type==="fuel"){let cost
 if(mission&&mission.stage==="pickup"&&Math.hypot(player.position.x-mission.x,player.position.z-mission.z)<10){if(mission.package){packageRoot.remove(mission.package.group);packages=packages.filter(p=>p!==mission.package)}let carriedParcel=mesh(new THREE.BoxGeometry(.85,.72,.85),mat(mission.type.color),rand(-.45,.45),1.62,1.85,player);carriedParcel.userData.homeX=carriedParcel.position.x;carried.push(carriedParcel);mission.stage="deliver";mission.label="الطرد معك — عد إلى مركز التوصيل";toast("تم استلام الطرد! اتجه إلى مركز التوصيل");hud();beep(620);return}if(mission&&mission.stage==="deliver"&&Math.hypot(player.position.x-40,player.position.z-40)<18){let broken=mission.fragile&&vehicle.damage>35;if(broken){toast("الطرد الهش تضرر — المكافأة أقل");save.money+=Math.round(mission.reward*.25)}else{save.money+=mission.reward;score+=mission.reward;save.high=Math.max(save.high,score);toast("توصيل ناجح! +"+mission.reward+" ◈")}for(let item of carried)if(item.parent)item.parent.remove(item);carried=[];mission=null;persist();createMission();hud();beep(850);return}
 if(Math.hypot(player.position.x-depot.x,player.position.z-depot.z)<22){garage();return}toast("اقترب من محطة أو كراج أو موقع المهمة")}
 function toggleVehicle(){if(state!=="play")return;if(!onFoot){if(Math.abs(vehicle.speed)>1.2){toast("توقف تماماً قبل النزول من المركبة");return}onFoot=true;walker.position.copy(player.position);walker.rotation.y=player.rotation.y;for(const item of carried){player.remove(item);walker.add(item);item.position.set(.35,1.6,.1)}walker.visible=true;player.visible=false;$("exitBtn").textContent="🚙 ركوب";toast("نزلت من المركبة — تحرك بأزرار القيادة");}else{if(walker.position.distanceTo(player.position)>5){toast("اقترب من مركبتك للركوب");return}player.position.copy(walker.position);player.rotation.y=walker.rotation.y;for(const item of carried){walker.remove(item);player.add(item);item.position.set(item.userData.homeX??.35,1.62,1.85)}onFoot=false;walker.visible=false;player.visible=true;$("exitBtn").textContent="🚶 خروج";toast("عدت إلى المركبة");}}
-function walkUpdate(dt){const forward=controls.gas||keys.w||keys.arrowup,back=controls.brake||keys.s||keys.arrowdown,turn=clamp(controls.steer+(keys.a||keys.arrowleft?-1:0)+(keys.d||keys.arrowright?1:0),-1,1);walker.rotation.y-=turn*dt*2.4;const move=(forward?1:0)-(back?1:0),speed=4.8;walker.position.x-=Math.sin(walker.rotation.y)*move*speed*dt;walker.position.z-=Math.cos(walker.rotation.y)*move*speed*dt;walker.position.x=clamp(walker.position.x,-475,475);walker.position.z=clamp(walker.position.z,-475,475);for(const b of city.buildings){const dx=walker.position.x-b.x,dz=walker.position.z-b.z,hx=b.w/2+.48,hz=b.d/2+.48;if(Math.abs(dx)<hx&&Math.abs(dz)<hz){if(hx-Math.abs(dx)<hz-Math.abs(dz))walker.position.x=b.x+Math.sign(dx||1)*hx;else walker.position.z=b.z+Math.sign(dz||1)*hz}}for(const o of city.obstacles){const dx=walker.position.x-o.x,dz=walker.position.z-o.z,d=Math.hypot(dx,dz),min=o.r+.55;if(d<min){walker.position.x=o.x+dx/(d||1)*min;walker.position.z=o.z+dz/(d||1)*min}}for(const p of city.peds){const dx=walker.position.x-p.g.position.x,dz=walker.position.z-p.g.position.z,d=Math.hypot(dx,dz);if(d<.9){walker.position.x+=dx/(d||1)*(.9-d);walker.position.z+=dz/(d||1)*(.9-d)}}walkPhase+=dt*(move?9:2);const swing=move?Math.sin(walkPhase)*.62:0;walkerParts.legs.forEach((p,i)=>p.rotation.x=(i===0?1:-1)*swing);walkerParts.arms.forEach((p,i)=>p.rotation.x=(i===0?-1:1)*swing*.7);walker.position.y=Math.abs(Math.sin(walkPhase*2))*(move?.055:0);}
+function walkUpdate(dt){const forward=controls.gas||keys.w||keys.arrowup,back=controls.brake||keys.s||keys.arrowdown,turn=clamp(controls.steer+(keys.a||keys.arrowleft?-1:0)+(keys.d||keys.arrowright?1:0),-1,1);walker.rotation.y-=turn*dt*2.4;const move=(forward?1:0)-(back?1:0),speed=4.8;walker.position.x-=Math.sin(walker.rotation.y)*move*speed*dt;walker.position.z-=Math.cos(walker.rotation.y)*move*speed*dt;walker.position.x=clamp(walker.position.x,-1370,1370);walker.position.z=clamp(walker.position.z,-1370,1370);for(const b of city.buildings){const dx=walker.position.x-b.x,dz=walker.position.z-b.z,hx=b.w/2+.48,hz=b.d/2+.48;if(Math.abs(dx)<hx&&Math.abs(dz)<hz){if(hx-Math.abs(dx)<hz-Math.abs(dz))walker.position.x=b.x+Math.sign(dx||1)*hx;else walker.position.z=b.z+Math.sign(dz||1)*hz}}for(const o of city.obstacles){const dx=walker.position.x-o.x,dz=walker.position.z-o.z,d=Math.hypot(dx,dz),min=o.r+.55;if(d<min){walker.position.x=o.x+dx/(d||1)*min;walker.position.z=o.z+dz/(d||1)*min}}for(const p of city.peds){const dx=walker.position.x-p.g.position.x,dz=walker.position.z-p.g.position.z,d=Math.hypot(dx,dz);if(d<.9){walker.position.x+=dx/(d||1)*(.9-d);walker.position.z+=dz/(d||1)*(.9-d)}}walkPhase+=dt*(move?9:2);const swing=move?Math.sin(walkPhase)*.62:0;walkerParts.legs.forEach((p,i)=>p.rotation.x=(i===0?1:-1)*swing);walkerParts.arms.forEach((p,i)=>p.rotation.x=(i===0?-1:1)*swing*.7);walker.position.y=Math.abs(Math.sin(walkPhase*2))*(move?.055:0);}
 function physics(dt){let cfg=player.userData.cfg;let gas=controls.gas||keys.w||keys.arrowup,brake=controls.brake||keys.s||keys.arrowdown,steer=controls.steer+(keys.a||keys.arrowleft?-1:0)+(keys.d||keys.arrowright?1:0);steer=clamp(steer,-1,1);
 let forward=new THREE.Vector3(-Math.sin(player.rotation.y),0,-Math.cos(player.rotation.y));let grip=1+save.upgrades.grip*.13,load=carried.length?Math.max(.55,1-carried.length/(maxCargo()+2)*.32):1;let engine=(cfg.speed+save.upgrades.engine*3)*load*(1-vehicle.damage/150);let accel=gas?engine/16:0;let drag=vehicle.speed*.32;let brakeForce=brake?Math.sign(vehicle.speed)*Math.min(Math.abs(vehicle.speed),19*dt):0;
 vehicle.speed+=accel*dt-drag*dt-brakeForce;if(!gas&&!brake)vehicle.speed*=Math.pow(.985,dt*60);if(controls.hand){vehicle.speed*=Math.pow(.94,dt*60);vehicle.slip=steer*Math.abs(vehicle.speed)*.06}else vehicle.slip*=Math.pow(.9,dt*60);
 vehicle.speed=clamp(vehicle.speed,-9,engine*(1-vehicle.damage/130));let steerFactor=clamp(Math.abs(vehicle.speed)/7,.25,1.2);vehicle.steer+=(steer-vehicle.steer)*Math.min(1,dt*5);player.rotation.y-=vehicle.steer*dt*(1.7+steerFactor*.8)*Math.sign(vehicle.speed||1)/grip;player.rotation.y+=vehicle.slip*dt;wheelMeshes.forEach(w=>w.rotation.x+=vehicle.speed*dt*1.9);player.rotation.z=THREE.MathUtils.damp(player.rotation.z,-vehicle.steer*Math.min(1,Math.abs(vehicle.speed)/18)*.075,dt,5);player.rotation.x=THREE.MathUtils.damp(player.rotation.x,(gas?-.025:brake?.035:0),dt,4);
-let vel=new THREE.Vector3(-Math.sin(player.rotation.y),0,-Math.cos(player.rotation.y));player.position.addScaledVector(vel,vehicle.speed*dt);player.position.x=clamp(player.position.x,-480,480);player.position.z=clamp(player.position.z,-480,480);
+let vel=new THREE.Vector3(-Math.sin(player.rotation.y),0,-Math.cos(player.rotation.y));player.position.addScaledVector(vel,vehicle.speed*dt);player.position.x=clamp(player.position.x,-1370,1370);player.position.z=clamp(player.position.z,-1370,1370);
 vehicle.rpm=900+Math.abs(vehicle.speed)*230;vehicle.gear=clamp(Math.floor(Math.abs(vehicle.speed)/10)+1,1,6);vehicle.fuel=Math.max(0,vehicle.fuel-dt*(.012+Math.abs(vehicle.speed)*.0008)*(1-save.upgrades.tank*.12));if(vehicle.fuel<=0)vehicle.speed*=Math.pow(.94,dt*60);
 for(let o of city.obstacles){let dx=player.position.x-o.x,dz=player.position.z-o.z,d=Math.hypot(dx,dz),min=o.r+1.7;if(d<min){let nx=dx/(d||1),nz=dz/(d||1);player.position.x=o.x+nx*min;player.position.z=o.z+nz*min;vehicle.damage=clamp(vehicle.damage+Math.abs(vehicle.speed)*.025,0,100);vehicle.speed*=-.25;vibrate(45)}}for(let ped of city.peds){let d=Math.hypot(player.position.x-ped.g.position.x,player.position.z-ped.g.position.z);if(d<1.65&&Math.abs(vehicle.speed)>2){if(elapsed-lastFine>3){save.money=Math.max(0,save.money-75);lastFine=elapsed;toast("مخالفة اصطدام بمشاة: -75 ◈");vibrate(90)}ped.dir+=Math.PI;vehicle.damage=clamp(vehicle.damage+2,0,100);vehicle.speed*=.45}}for(let sig of signals){let d=Math.hypot(player.position.x-(sig.x+9),player.position.z-(sig.z+9));if(d<11&&Math.abs(vehicle.speed)>5&&sig.lamp.material.color.getHex()===0xe34b45&&elapsed-lastFine>3){save.money=Math.max(0,save.money-35);lastFine=elapsed;toast("تجاوز إشارة حمراء: -35 ◈")}}
 for(let car of city.traffic){let d=player.position.distanceTo(car.g.position);if(d<3.2){vehicle.damage=clamp(vehicle.damage+Math.abs(vehicle.speed)*.07,0,100);vehicle.speed*=-.3;car.speed*=.45;vibrate(70);beep(120,.18)}}
