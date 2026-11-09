@@ -59,10 +59,10 @@ The repository root now also contains a standalone browser edition in `index.htm
 - Grid road network, lane markings, sidewalks, traffic signals, ambient traffic and simple pedestrian movement.
 - Day/night lighting cycle and dynamic clear, fog and rain weather; rain changes road material response.
 - Four selectable vehicle profiles (pickup, van, sports car and truck), steering, acceleration, braking, handbrake, collision damage, fuel and service stations.
-- Delivery contracts with pickup and drop-off stages, fragile parcel penalties, time limits, rewards, repair and fuel services.
+- Delivery contracts with pickup and drop-off stages, fragile/heavy/urgent and long-distance jobs, time limits, traffic fines, rewards, repair and fuel services.
 - Garage upgrades for engine, grip, fuel tank and cargo; local browser save and migration of the earlier web game's coin balance when available.
 - Chase, hood and cinematic camera modes, mobile touch controls, keyboard controls, minimap/full map with a route line, Low/Medium/High quality presets and optional FPS counter.
-- Web Audio generated engine tone and UI effects, plus vibration feedback where supported.
+- Web Audio generated engine tone, a simple synthesized radio melody loop and UI effects, plus vibration feedback where supported.
 
 ### Run the browser edition
 1. Open [the GitHub Pages game](https://anwar0-001.github.io/Vpickup2/) after the Pages deployment finishes.
