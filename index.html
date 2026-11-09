@@ -40,7 +40,7 @@ import * as THREE from 'three';
 (()=>{
 "use strict";
 const $=id=>document.getElementById(id),canvas=$("game");
-const SAVE="pickup123_save";let save={coins:0,high:0,speed:0,capacity:0,magnet:0,engine:0,paint:0,vehicle:0};try{save=Object.assign(save,JSON.parse(localStorage.getItem(SAVE)||"{}"))}catch{}
+const SAVE="pickup123_save";let save={coins:0,high:0,speed:0,capacity:0,magnet:0,engine:0,paint:0,vehicle:0};try{const previous=localStorage.getItem(SAVE)||localStorage.getItem("pickupDeliverySave_v1")||"{}";save=Object.assign(save,JSON.parse(previous));localStorage.setItem(SAVE,JSON.stringify(save))}catch{}
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc9e8);scene.fog=new THREE.Fog(0x9bc9e8,42,145);
 const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,260);
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
