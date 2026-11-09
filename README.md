@@ -81,3 +81,18 @@ The repository root now also contains a standalone browser edition in `index.htm
 Phase 1 is a playable procedural open-world foundation, not a finished AAA-scale simulation. The map and delivery loop are expanded, but enterable interiors, underwater exploration, aircraft/boats, story chapters, property systems and the wider life-simulation features are intentionally reserved for later approved phases. Traffic and pedestrians use lightweight waypoint-like movement rather than full city navigation; vehicle handling is arcade/simplified rather than a full tire-and-suspension physics solver; rain uses a procedural particle field and wet-looking road material rather than expensive planar reflections. A fully modelled vehicle interior, full cargo rigid-body simulation, advanced damage meshes, deeper pedestrian AI and richer character animation, radio music composition, and comprehensive device testing remain future work. Low/Medium/High settings adjust render resolution, shadows, rain and distance culling; performance depends on the phone/browser/GPU.
 
 The browser save is stored locally in the current browser profile and is not synchronized with the Godot save or other devices. The original Godot project and its existing workflows remain unchanged.
+
+## Phase 2 — المنازل القابلة للشراء والديكورات الداخلية
+
+أضيفت في نسخة المتصفح:
+- ثلاثة منازل إجرائية في مناطق مختلفة من الخريطة، ولكل منزل سعر شراء وموقع مستقل.
+- شراء المنزل بالرصيد داخل اللعبة، مع حفظ الملكية محلياً في المتصفح.
+- دخول المنزل والخروج منه بشخصية اللاعب سيراً على الأقدام.
+- مساحة داخلية إجرائية مشتركة تضم غرفة معيشة وسريراً ومطبخاً وأثاثاً أساسياً، من دون تنزيل نماذج أو صور خارجية.
+- التفاعل مع السرير لتجاوز الوقت إلى الساعة 07:00، والتفاعل مع المدخل للعودة إلى العالم المفتوح.
+- إظهار مواقع المنازل على الخريطة، مع تمييز المنازل التي تم شراؤها.
+- إيقاف تحديث حركة المرور والمشاة والطقس والوقت الخارجي أثناء وجود اللاعب داخل المنزل لتقليل العمل غير الضروري.
+
+**طريقة التجربة:** ابدأ اللعبة، انزل من المركبة بعد توقفها، ثم اقترب سيراً من أحد المنازل الثلاثة واضغط «تفاعل». اشترِ المنزل إن لم يكن مملوكاً، ثم تحرك داخله للوصول إلى السرير أو الباب. الملكية تحفظ في بيانات المتصفح على الجهاز نفسه.
+
+**حدود المرحلة:** هذه بداية لنظام العقارات وليست نظام حياة كاملاً؛ المنازل الثلاثة تستخدم تخطيطاً داخلياً واحداً، ولا توجد بعد ديكورات قابلة للتخصيص أو تخزين أغراض أو نظام عائلة أو حفظ سحابي. يجب اختبار الحركة والتفاعل فعلياً على الهاتف قبل اعتماد المرحلة نهائياً.
