@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "web-pickups/**"
+      - "index.html"
       - ".github/workflows/web-pickups-pages.yml"
   workflow_dispatch:
 
@@ -30,10 +31,27 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Validate browser game JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          start = html.find('<script type="module">')
+          end = html.find("</script>", start)
+          if start < 0 or end < 0:
+              raise SystemExit("Could not locate the game module script")
+          Path("/tmp/vpickup.mjs").write_text(html[start + len('<script type="module">'):end], encoding="utf-8")
+          PY
+          node --check /tmp/vpickup.mjs
+      - name: Prepare Pages site
+        run: |
+          mkdir -p _site
+          cp index.html _site/index.html
+          cp -R web-pickups _site/web-pickups
       - name: Upload website
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web-pickups
+          path: _site
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
