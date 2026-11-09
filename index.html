@@ -50,6 +50,7 @@ const hemi=new THREE.HemisphereLight(0xd6eaff,0x4a5844,1.35);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffedcf,2.0);sun.position.set(-120,180,80);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-100;sun.shadow.camera.right=100;sun.shadow.camera.top=100;sun.shadow.camera.bottom=-100;scene.add(sun);
 // Phase 13: lightweight procedural stars, a moon and warm street lamps for the night cycle.
 const moonLight=new THREE.DirectionalLight(0x9db8d8,0);moonLight.position.set(120,140,-80);scene.add(moonLight);
+const lightningFlashLight=new THREE.PointLight(0xe8f5ff,0,260,2);scene.add(lightningFlashLight);
 const moon=new THREE.Mesh(new THREE.SphereGeometry(16,16,12),new THREE.MeshBasicMaterial({color:0xe1e8e9,transparent:true,opacity:0.0}));scene.add(moon);moon.visible=false;
 const starGeometry=new THREE.BufferGeometry(),starPositions=new Float32Array(260*3);for(let i=0;i<260;i++){const angle=rand(0,Math.PI*2),height=rand(.12,.95),radius=Math.sqrt(1-height*height)*900,p=i*3;starPositions[p]=Math.cos(angle)*radius;starPositions[p+1]=height*900;starPositions[p+2]=Math.sin(angle)*radius}starGeometry.setAttribute("position",new THREE.BufferAttribute(starPositions,3));
 const stars=new THREE.Points(starGeometry,new THREE.PointsMaterial({color:0xeaf3ff,size:1.8,sizeAttenuation:false,transparent:true,opacity:0,depthWrite:false}));stars.visible=false;scene.add(stars);
@@ -517,12 +518,12 @@ for(let i=0;i<activeRainCount;i++){const p=i*6,x=rand(-45,45),y=rand(0,35),z=ran
 rainGeo.setAttribute("position",new THREE.BufferAttribute(rainPos,3));rainGeo.setDrawRange(0,activeRainCount*2);
 const rainMaterial=new THREE.LineBasicMaterial({color:0xc5e5f5,transparent:true,opacity:0.0,depthWrite:false});
 const rain=new THREE.LineSegments(rainGeo,rainMaterial);rain.visible=false;scene.add(rain);
-let weather="clear",weatherClock=0,weatherBlend=1,weatherFogTarget=.0019,weatherOpacityTarget=0,weatherBgTarget=new THREE.Color(0x91b8ce),weatherFogColorTarget=new THREE.Color(0x91b8ce),weatherClockLabel="صافٍ",rainWindX=-3.5,rainWindZ=8,dayClock=save.day*60,elapsed=0,mission=null,carried=[],missionDone=0,score=0,state="menu",cameraMode=0,quality=save.quality,showFPS=false,muted=false,radioOn=false,radioTimer=null,engineOsc=null,audio=null,last=0,frameCount=0,fpsTimer=0,fps=0,nextCull=0,lastFine=-99,nextHud=0,perfWindow=0,perfFrames=0,perfLowStreak=0,perfHighStreak=0;
+let weather="clear",weatherClock=0,weatherBlend=1,lightningTimer=0,lightningFlash=0,nextLightning=rand(8,18),weatherFogTarget=.0019,weatherOpacityTarget=0,weatherBgTarget=new THREE.Color(0x91b8ce),weatherFogColorTarget=new THREE.Color(0x91b8ce),weatherClockLabel="صافٍ",rainWindX=-3.5,rainWindZ=8,dayClock=save.day*60,elapsed=0,mission=null,carried=[],missionDone=0,score=0,state="menu",cameraMode=0,quality=save.quality,showFPS=false,muted=false,radioOn=false,radioTimer=null,engineOsc=null,audio=null,last=0,frameCount=0,fpsTimer=0,fps=0,nextCull=0,lastFine=-99,nextHud=0,perfWindow=0,perfFrames=0,perfLowStreak=0,perfHighStreak=0;
 let onFoot=false,walkPhase=0,underwaterMode=false,oxygen=100,diveEntryPosition=null,activeWaterZone=null,waypoint=save.waypoint||null;let controls={steer:0,gas:false,brake:false,hand:false,swimUp:false,swimDown:false},keys={},vehicle={speed:0,steer:0,heading:0,gear:1,rpm:900,slip:0,lateralSpeed:0,absActive:false,shiftTimer:0,accelG:0,damage:save.damage||0,fuel:save.fuel||100,broken:false,tireWear:save.tireWear||0};
 const maxCargo=()=>player.userData.cfg.capacity+save.upgrades.cargo*3;
 function persist(){save.fuel=vehicle.fuel;save.damage=vehicle.damage;save.tireWear=vehicle.tireWear||0;save.day=dayClock/60;save.waypoint=waypoint;save.money=Math.max(0,Math.floor(save.money));try{const payload=JSON.stringify(save);localStorage.setItem(SAVE,payload);localStorage.setItem(SLOT_PREFIX+activeSlot,payload);localStorage.setItem(ACTIVE_SLOT_KEY,String(activeSlot))}catch{}}
 const qualityProfiles=[{name:"Low",pixelRatio:.8,shadows:false,shadowMap:256,rainSegments:140,buildingDistance:145,regionMargin:65,trafficDistance:135,pedestrianDistance:65},{name:"Medium",pixelRatio:1,shadows:true,shadowMap:512,rainSegments:360,buildingDistance:285,regionMargin:155,trafficDistance:190,pedestrianDistance:100},{name:"High",pixelRatio:1.35,shadows:true,shadowMap:1024,rainSegments:650,buildingDistance:440,regionMargin:270,trafficDistance:245,pedestrianDistance:135}];
-function applyQualitySettings(saveChanges=false){const profile=qualityProfiles[quality]||qualityProfiles[1];renderer.setPixelRatio(Math.min(devicePixelRatio,profile.pixelRatio));renderer.setSize(innerWidth,innerHeight,false);renderer.shadowMap.enabled=profile.shadows;renderer.shadowMap.type=quality===2?THREE.PCFSoftShadowMap:THREE.BasicShadowMap;sun.castShadow=profile.shadows;sun.shadow.mapSize.set(profile.shadowMap,profile.shadowMap);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}activeRainCount=profile.rainSegments;rainGeo.setDrawRange(0,activeRainCount*2);rain.visible=weather==="rain"&&quality>0;weatherOpacityTarget=rain.visible?.58:0;$("qualityBtn").textContent="Q: "+["L","M","H"][quality];if(saveChanges){save.quality=quality;persist()}}
+function applyQualitySettings(saveChanges=false){const profile=qualityProfiles[quality]||qualityProfiles[1];renderer.setPixelRatio(Math.min(devicePixelRatio,profile.pixelRatio));renderer.setSize(innerWidth,innerHeight,false);renderer.shadowMap.enabled=profile.shadows;renderer.shadowMap.type=quality===2?THREE.PCFSoftShadowMap:THREE.BasicShadowMap;sun.castShadow=profile.shadows;sun.shadow.mapSize.set(profile.shadowMap,profile.shadowMap);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}activeRainCount=profile.rainSegments;rainGeo.setDrawRange(0,activeRainCount*2);rain.visible=(weather==="rain"||weather==="thunder")&&quality>0;weatherOpacityTarget=rain.visible?.58:0;$("qualityBtn").textContent="Q: "+["L","M","H"][quality];if(saveChanges){save.quality=quality;persist()}}
 function toast(s){let e=$("toast");e.textContent=s;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1800)}
 function vibrate(ms=35){if(navigator.vibrate)navigator.vibrate(ms)}
 function audioInit(){if(audio)return;try{audio=new AudioContext();let osc=audio.createOscillator(),gain=audio.createGain();osc.type="sawtooth";osc.frequency.value=55;gain.gain.value=.0001;osc.connect(gain);gain.connect(audio.destination);osc.start();engineOsc={osc,gain};}catch{}}
@@ -552,7 +553,7 @@ $("mapBtn").onclick=()=>{$("map").classList.add("show");drawMap()};$("closeMap")
 $("mapCanvas").addEventListener("click",e=>{const c=$("mapCanvas"),r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*800,z=(e.clientY-r.top)/r.height*800,scale=.265;waypoint={x:clamp((x-400)/scale,-1370,1370),z:clamp((z-400)/scale,-1370,1370)};persist();drawMap();hud();toast("تم تحديد وجهة GPS")});
 $("clearWaypoint").onclick=()=>{waypoint=null;persist();drawMap();drawMiniMap();hud();toast("تم مسح وجهة GPS")};
 $("cameraBtn").onclick=()=>{cameraMode=(cameraMode+1)%3;$("cameraBtn").textContent=["📷 مطاردة","📷 داخلية","📷 سينمائية"][cameraMode];toast(["كاميرا المطاردة","كاميرا داخل المركبة","الكاميرا السينمائية"][cameraMode])};
-$("weatherBtn").onclick=()=>{const order=["clear","rain","fog"],next=order[(order.indexOf(weather)+1)%order.length];weatherClock=0;setWeather(next)};
+$("weatherBtn").onclick=()=>{const order=["clear","rain","fog","thunder"],next=order[(order.indexOf(weather)+1)%order.length];weatherClock=0;setWeather(next)};
 $("qualityBtn").onclick=()=>{quality=(quality+1)%3;applyQualitySettings(true);$("weatherBtn").textContent="طقس: "+weatherClockLabel};
 $("lights").onclick=()=>{save.lights=!save.lights;headlamps.forEach(l=>l.intensity=save.lights?2.2:0);toast(save.lights?"الأضواء تعمل":"الأضواء مطفأة")};
 $("horn").onclick=()=>beep(210,.22);function startRadio(){audioInit();if(!audio||radioTimer)return;let notes=[392,494,587,494,440,523,659,523,392,440,523,440],n=0;radioTimer=setInterval(()=>{if(!radioOn||muted||!audio)return;let o=audio.createOscillator(),g=audio.createGain();o.type="triangle";o.frequency.value=notes[n++%notes.length];g.gain.value=.012;o.connect(g);g.connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.24);o.stop(audio.currentTime+.25)},300)}$("radio").onclick=()=>{radioOn=!radioOn;if(radioOn)startRadio();else{clearInterval(radioTimer);radioTimer=null}beep(radioOn?520:240);toast(radioOn?"الراديو يعمل":"الراديو متوقف")};
@@ -677,22 +678,24 @@ function updateTraffic(dt){for(const c of city.traffic){const g=c.g;let target=c
 function updatePeds(dt){const target=onFoot?walker.position:player.position;for(let p of city.peds){let d=Math.hypot(target.x-p.g.position.x,target.z-p.g.position.z);if(d<9){p.wait=.6;p.dir=Math.atan2(p.g.position.x-target.x,p.g.position.z-target.z)}if(p.wait>0)p.wait-=dt;else{p.g.position.x+=Math.sin(p.dir)*p.speed*dt;p.g.position.z+=Math.cos(p.dir)*p.speed*dt}if(Math.abs(p.g.position.x)>430||Math.abs(p.g.position.z)>430)p.dir+=Math.PI;p.g.rotation.y=p.dir;p.phase+=dt*(p.wait>0?1.5:7);const swing=p.wait>0?0:Math.sin(p.phase)*.48;p.legs.forEach((l,i)=>l.rotation.x=(i===0?1:-1)*swing);p.arms.forEach((a,i)=>a.rotation.x=(i===0?-1:1)*swing*.7)}}
 function updateSignals(){for(let s of signals){let green=Math.sin(elapsed*.22+s.phase)>-.2;s.lamp.material.color.setHex(green?0x38d27b:0xe34b45)}}
 function setWeather(next,announce=true){
- weather=next;weatherBlend=0;
- weatherClockLabel=next==="rain"?"ممطر":next==="fog"?"ضبابي":"صافٍ";
- weatherFogTarget=next==="fog"?.006:next==="rain"?.0035:.0019;
- weatherOpacityTarget=next==="rain"&&quality>0?.58:0;
- weatherBgTarget.setHex(next==="rain"?0x586b79:next==="fog"?0x9caeaf:0x91b8ce);
+ weather=next;weatherBlend=0;lightningTimer=0;lightningFlash=0;lightningFlashLight.intensity=0;
+ weatherClockLabel=next==="rain"?"ممطر":next==="fog"?"ضبابي":next==="thunder"?"عاصفة رعدية":"صافٍ";
+ weatherFogTarget=next==="fog"?.006:next==="thunder"?.0048:next==="rain"?.0035:.0019;
+ weatherOpacityTarget=(next==="rain"||next==="thunder")&&quality>0?(next==="thunder"?.72:.58):0;
+ weatherBgTarget.setHex(next==="thunder"?0x394957:next==="rain"?0x586b79:next==="fog"?0x9caeaf:0x91b8ce);
  weatherFogColorTarget.copy(weatherBgTarget);
- rain.visible=next==="rain"&&quality>0;
- mats.road.roughness=next==="rain"?.34:.94;
- mats.road.metalness=next==="rain"?.16:0;
- if(announce)toast(next==="rain"?"بدأ المطر":next==="fog"?"انتشر الضباب":"عاد الطقس صافياً");
+ rain.visible=(next==="rain"||next==="thunder")&&quality>0;
+ rainWindX=next==="thunder"?-7:next==="rain"?-3.5:-3.5;rainWindZ=next==="thunder"?11:8;
+ mats.road.roughness=(next==="rain"||next==="thunder")?.34:.94;
+ mats.road.metalness=(next==="rain"||next==="thunder")?.16:0;
+ if(announce)toast(next==="rain"?"بدأ المطر":next==="thunder"?"بدأت عاصفة رعدية":next==="fog"?"انتشر الضباب":"عاد الطقس صافياً");
  $("weatherBtn").textContent="طقس: "+weatherClockLabel;
 }
 function updateWeather(dt){
- if(insideHome)return;
+ if(insideHome||insideBuilding)return;
  weatherClock+=dt;
- if(weatherClock>85){weatherClock=0;setWeather(choose(["clear","clear","fog","rain"]));}
+ if(weatherClock>85){weatherClock=0;setWeather(choose(["clear","clear","fog","rain","rain","thunder"]));}
+ if(weather==="thunder"&&!underwaterMode){lightningTimer+=dt;if(lightningTimer>nextLightning){lightningTimer=0;nextLightning=rand(8,18);lightningFlash=.24;const p=onFoot?walker.position:player.position;lightningFlashLight.position.set(p.x+rand(-90,90),72,p.z+rand(-90,90))}lightningFlash=Math.max(0,lightningFlash-dt*2.6);lightningFlashLight.intensity=lightningFlash*68}else{lightningFlash=0;lightningFlashLight.intensity=0}
  const blend=1-Math.exp(-dt*0.42);
  scene.fog.density=THREE.MathUtils.lerp(scene.fog.density,weatherFogTarget,blend);
  scene.fog.color.lerp(weatherFogColorTarget,blend);
