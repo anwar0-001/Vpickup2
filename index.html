@@ -108,8 +108,10 @@ function sculptedTerrain(g,cx,cz,w,d,seed,amplitude=5,base=0x687b58){
  for(let i=0;i<pos.count;i++){
   const x=pos.getX(i),z=pos.getY(i);let h=Math.sin((x+seed%37)*.012)*Math.cos((z-seed%29)*.015)*amplitude*.22;
   for(const p of peaks){const q=Math.exp(-((x-p.x)**2+(z-p.z)**2)/(p.r*p.r));h+=q*amplitude*p.h}
-  h=Math.max(-.5,h);pos.setZ(i,h);
-  const shade=THREE.MathUtils.clamp(.86+h/(amplitude*5),.72,1.12),c=new THREE.Color(base).multiplyScalar(shade);
+  // Fade elevation smoothly at patch borders so biome terrain blends into surrounding ground.
+  const edge=Math.max(0,Math.min(1-Math.abs(x)/(w*.5),1-Math.abs(z)/(d*.5))),t=THREE.MathUtils.clamp(edge/.18,0,1),fade=t*t*(3-2*t);
+  h=Math.max(-.5,h*fade);pos.setZ(i,h);
+  const shade=THREE.MathUtils.clamp(1+h/(amplitude*5),.78,1.12),c=new THREE.Color(base).multiplyScalar(shade);
   colors.push(c.r,c.g,c.b);
  }
  geo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();geo.rotateX(-Math.PI/2);
