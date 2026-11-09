@@ -64,6 +64,7 @@ function surfaceTexture(kind,seed){
 }
 const grassTexture=surfaceTexture("grass",1701),asphaltTexture=surfaceTexture("asphalt",2903),concreteTexture=surfaceTexture("concrete",4817);
 const mats={grass:mat(0xffffff,.98),road:mat(0xffffff,.96),side:mat(0xffffff,.92),line:mat(0xd8d0ad),water:mat(0x347d91,.24,.25),trunk:mat(0x634a35),leaf:mat(0x315d3c),glass:mat(0x6e9da8,.28,.35),tire:mat(0x171b1d),white:mat(0xd8d6ca),yellow:mat(0xe9bc52)};
+mats.water.side=THREE.DoubleSide;mats.water.needsUpdate=true;
 mats.grass.map=grassTexture;mats.grass.bumpMap=grassTexture;mats.grass.bumpScale=.12;
 mats.road.map=asphaltTexture;mats.road.bumpMap=asphaltTexture;mats.road.bumpScale=.035;
 mats.side.map=concreteTexture;mats.side.bumpMap=concreteTexture;mats.side.bumpScale=.025;
@@ -237,6 +238,20 @@ regionRoad(720,900,18,520);regionRoad(930,900,520,18);regionRoad(930,320,620,12)
 regionRoad(-900,390,18,620);regionRoad(-900,1050,620,18);
 // A short elevated crossing on the eastern coastal connector.
 bridgeSpan(930,320,190,18);
+// Phase 9: a freshwater river links the northern woodland to the emerald lake.
+const riverSurface=mesh(new THREE.PlaneGeometry(28,520),mats.water,-900,-.075,130);riverSurface.rotation.x=-Math.PI/2;
+for(let z=-110;z<=370;z+=40)for(const side of [-1,1]){const rock=mesh(new THREE.DodecahedronGeometry(1.8,0),mat(0x747b72),-900+side*18,1.1,z+rand(-7,7));rock.scale.set(1.5,.7,1.1);city.obstacles.push({x:-900+side*18,z,r:1.8,type:"rock"})}
+city.landmarks.push({name:"نهر الزمرد",x:-900,z:140});
+// Low-cost underwater floor, coral gardens and an original sunken wooden wreck.
+const underwaterRoot=new THREE.Group();scene.add(underwaterRoot);underwaterRoot.visible=false;
+function underwaterFloor(x,z,w,d,y,color){const floor=mesh(new THREE.PlaneGeometry(w,d),mat(color,.98),x,y,z,underwaterRoot);floor.rotation.x=-Math.PI/2;floor.receiveShadow=false;return floor}
+underwaterFloor(470,0,170,2800,-17,0x667a68);underwaterFloor(1240,390,225,500,-14,0x8a8066);underwaterFloor(-900,390,390,300,-11,0x68785f);underwaterFloor(-900,130,25,500,-8,0x6d806d);
+function coralCluster(x,z,scale=1){const colors=[0xc56e55,0xd69b61,0x8c9d73,0x8c7eae];for(let i=0;i<5;i++){const a=i*Math.PI*2/5,r=(1.1+Math.random()*1.6)*scale,h=(1.8+Math.random()*3.2)*scale,px=x+Math.cos(a)*r,pz=z+Math.sin(a)*r;const branch=mesh(new THREE.ConeGeometry(.45*scale,h,6),mat(colors[i%colors.length],.8),px,-13+h*.48,pz,underwaterRoot);branch.rotation.z=(Math.random()-.5)*.28;branch.rotation.x=(Math.random()-.5)*.28}}
+for(let i=0;i<28;i++){coralCluster(1240+rand(-88,88),390+rand(-205,205),rand(.65,1.25));if(i%2===0)coralCluster(470+rand(-68,68),rand(-1300,1300),rand(.55,1.05))}
+for(let i=0;i<14;i++)coralCluster(-900+rand(-145,145),390+rand(-105,105),rand(.55,.95));
+const wreck=new THREE.Group();mesh(new THREE.BoxGeometry(17,1.8,5.5),mat(0x624832,.95),0,0,0,wreck);mesh(new THREE.BoxGeometry(10,1.1,4.2),mat(0x795a3c),-2,1.25,0,wreck);mesh(new THREE.CylinderGeometry(.18,.28,9,7),mat(0x604631),1,5,0,wreck);mesh(new THREE.BoxGeometry(5,.35,.35),mat(0x9b805c),1,6.5,0,wreck);wreck.position.set(1240,-7,455);wreck.rotation.y=.62;wreck.rotation.z=.07;underwaterRoot.add(wreck);
+const underwaterGlow=new THREE.PointLight(0x3c9eb8,2.1,85);underwaterGlow.position.set(1240,-2,390);underwaterRoot.add(underwaterGlow);
+const waterZones=[{id:"ocean",type:"rect",minX:380,maxX:560,minZ:-1400,maxZ:1400},{id:"beach",type:"rect",minX:1120,maxX:1360,minZ:130,maxZ:650},{id:"river",type:"rect",minX:-914,maxX:-886,minZ:-130,maxZ:390},{id:"lake",type:"ellipse",x:-900,z:390,rx:205,rz:155}];
 
 // Street lights, traffic signals and street props
 for(let n=-4;n<=4;n++)for(let s of [-1,1]){let x=n*100+s*12,z=-430;let pole=mesh(new THREE.CylinderGeometry(.16,.22,8,6),mat(0x424c4e),x,4,z);mesh(new THREE.SphereGeometry(.5,8,6),mat(0xffe7a2,.4),x,8,z);city.lamps.push({light:null,x,z})}
