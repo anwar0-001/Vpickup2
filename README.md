@@ -48,3 +48,29 @@ All current scene geometry is generated from simple built-in Godot meshes. Use o
 توجد لعبة ثلاثية الأبعاد مستقلة في مجلد `web-pickups/` ويمكن نشر ذلك المجلد عبر GitHub Pages باستخدام سير العمل الموجود في `.github/workflows/web-pickups-pages.yml`. تدعم نسخة الويب التحكم بلوحة المفاتيح واللمس، ومهام نقاط التفتيش ومكافآت الرصيد داخل الجولة.
 
 شغّل خادم ملفات محليًا من `web-pickups/` (مثل `python -m http.server 8000`) ثم افتح الصفحة عبر `http://localhost:8000`. تحتاج اللعبة اتصالًا بالإنترنت لتحميل Three.js من CDN. التقدم والرصيد في نسخة المتصفح مؤقتان خلال الجولة ولا يُحفظان بعد إغلاق الصفحة.
+
+## Browser game — Open World upgrade
+
+The repository root now also contains a standalone browser edition in `index.html`. It is a separate Three.js implementation and does not replace or modify the Godot project files.
+
+### Browser edition features
+- Procedurally generated 3D city with a downtown district, suburban blocks, industrial area, highway corridor, bridge, waterfront and rural hills.
+- Generated geometry and canvas-made landmark signs; no downloaded models, image textures, logos, characters or audio files.
+- Grid road network, lane markings, sidewalks, traffic signals, ambient traffic and simple pedestrian movement.
+- Day/night lighting cycle and dynamic clear, fog and rain weather; rain changes road material response.
+- Four selectable vehicle profiles (pickup, van, sports car and truck), steering, acceleration, braking, handbrake, collision damage, fuel and service stations.
+- Delivery contracts with pickup and drop-off stages, fragile parcel penalties, time limits, rewards, repair and fuel services.
+- Garage upgrades for engine, grip, fuel tank and cargo; local browser save and migration of the earlier web game's coin balance when available.
+- Chase, hood and cinematic camera modes, mobile touch controls, keyboard controls, minimap/full map with a route line, Low/Medium/High quality presets and optional FPS counter.
+- Web Audio generated engine tone and UI effects, plus vibration feedback where supported.
+
+### Run the browser edition
+1. Open [the GitHub Pages game](https://anwar0-001.github.io/Vpickup2/) after the Pages deployment finishes.
+2. Allow the page to load the pinned Three.js 0.160.0 module from jsDelivr; an internet connection is required on first load.
+3. On mobile, use the left steering pad and the right-side accelerator/brake controls. Use Interact near parcels, service stations or the delivery hub.
+4. On desktop, use WASD or arrow keys to drive, E to interact and M to open the map.
+
+### Current development status and limitations
+This is a playable procedural open-world prototype, not a finished AAA-scale simulation. Traffic and pedestrians use lightweight waypoint-like movement rather than full city navigation; vehicle handling is arcade/simplified rather than a full tire-and-suspension physics solver; rain uses a procedural particle field and wet-looking road material rather than expensive planar reflections. Interior camera, full cargo rigid-body simulation, advanced damage meshes/smoke, detailed pedestrian animation, radio music composition, and comprehensive device testing remain future work. Low/Medium/High settings adjust render resolution, shadows, rain and distance culling; performance depends on the phone/browser/GPU.
+
+The browser save is stored locally in the current browser profile and is not synchronized with the Godot save or other devices. The original Godot project and its existing workflows remain unchanged.
