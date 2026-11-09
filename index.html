@@ -239,6 +239,22 @@ bridgeSpan(930,320,190,18);
 // Street lights, traffic signals and street props
 for(let n=-4;n<=4;n++)for(let s of [-1,1]){let x=n*100+s*12,z=-430;let pole=mesh(new THREE.CylinderGeometry(.16,.22,8,6),mat(0x424c4e),x,4,z);mesh(new THREE.SphereGeometry(.5,8,6),mat(0xffe7a2,.4),x,8,z);city.lamps.push({light:null,x,z})}
 const signals=[];for(let x=-400;x<=400;x+=100)for(let z=-400;z<=400;z+=100){if(Math.abs(x)>380||Math.abs(z)>380)continue;let pole=mesh(new THREE.CylinderGeometry(.12,.15,5,6),mat(0x303a3d),x+9,2.5,z+9);let bulb=mesh(new THREE.BoxGeometry(.5,1.5,.45),mat(0x29443a),x+9,5.4,z+9);let lamp=mesh(new THREE.SphereGeometry(.19,8,6),mat(0x38d27b,.4),x+9,5.4,z+9);signals.push({lamp,phase:Math.random()*10,x,z})}
+// Phase 6: marked urban junctions with instanced zebra crossings and stop lines.
+{
+ const junctions=[-300,-100,0,100,300],crossCount=junctions.length*junctions.length*14,stopCount=junctions.length*junctions.length*4;
+ const crosswalks=new THREE.InstancedMesh(new THREE.BoxGeometry(.58,.035,14.2),mat(0xe4e3d9,.92),crossCount),stopLines=new THREE.InstancedMesh(new THREE.BoxGeometry(.24,.04,14.2),mat(0xe0dfd5,.9),stopCount),dummy=new THREE.Object3D();
+ crosswalks.castShadow=false;crosswalks.receiveShadow=true;stopLines.castShadow=false;stopLines.receiveShadow=true;
+ let ci=0,si=0;
+ for(const x of junctions)for(const z of junctions){
+  // Zebra stripes cross both road directions; one shared instanced mesh keeps draw calls low.
+  for(let n=0;n<7;n++){dummy.position.set(x-3.9+n*1.3,.095,z);dummy.rotation.set(0,0,0);dummy.scale.set(1,1,1);dummy.updateMatrix();crosswalks.setMatrixAt(ci++,dummy.matrix)}
+  for(let n=0;n<7;n++){dummy.position.set(x,.095,z-3.9+n*1.3);dummy.rotation.set(0,Math.PI/2,0);dummy.scale.set(1,1,1);dummy.updateMatrix();crosswalks.setMatrixAt(ci++,dummy.matrix)}
+  // Stop bars sit just before the crossings on all four approaches.
+  for(const side of [-1,1]){dummy.position.set(x+side*10,.096,z);dummy.rotation.set(0,0,0);dummy.updateMatrix();stopLines.setMatrixAt(si++,dummy.matrix);dummy.position.set(x,.096,z+side*10);dummy.rotation.set(0,Math.PI/2,0);dummy.updateMatrix();stopLines.setMatrixAt(si++,dummy.matrix)}
+ }
+ crosswalks.instanceMatrix.needsUpdate=true;stopLines.instanceMatrix.needsUpdate=true;crosswalks.computeBoundingSphere();stopLines.computeBoundingSphere();scene.add(crosswalks,stopLines);
+}
+
 // Generate canvas textures for shop signs and road labels
 function signTexture(text,color){let c=document.createElement("canvas");c.width=512;c.height=128;let q=c.getContext("2d");q.fillStyle=color;q.fillRect(0,0,512,128);q.fillStyle="#fff";q.font="bold 48px sans-serif";q.textAlign="center";q.textBaseline="middle";q.fillText(text,256,64);let t=new THREE.CanvasTexture(c);return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide})}
 function landmark(name,x,z,color){let g=new THREE.Group();mesh(new THREE.CylinderGeometry(2.2,2.2,.3,16),mat(color),0,.15,0,g);mesh(new THREE.BoxGeometry(1.3,8,1.3),mat(0xd8d7c7),0,4,0,g);let board=mesh(new THREE.PlaneGeometry(12,3),signTexture(name,"#21463c"),0,8,0,g);g.position.set(x,0,z);scene.add(g);city.landmarks.push({name,x,z,group:g})}
