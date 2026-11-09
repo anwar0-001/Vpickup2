@@ -53,6 +53,14 @@ All current scene geometry is generated from simple built-in Godot meshes. Use o
 
 The repository root now also contains a standalone browser edition in `index.html`. It is a separate Three.js implementation and does not replace or modify the Godot project files.
 
+### Phase 2 — realistic vehicle physics
+- Automatic 7-speed gearbox with RPM response, engine torque band and short shift interruptions.
+- Vehicle mass affects acceleration; cargo load, damage, upgrades and tire wear continue to influence performance.
+- Spring-like per-wheel travel, visible body pitch under acceleration/braking and body roll under cornering.
+- Lateral inertia and handbrake drift with traction recovery; grip changes with road, rain and tire condition.
+- ABS-style braking modulation on low-grip surfaces, with a live RPM / gear / ABS dashboard readout.
+- Fuel consumption now responds to throttle and vehicle load. All physics and visual effects are procedural; no external vehicle assets were added.
+
 ### Browser edition features
 - Procedurally generated 3D city with a downtown district, suburban blocks, industrial area, highway corridor, bridge, waterfront and rural hills.
 - Phase 1 expanded the playable world bounds to roughly 2.8 km × 2.8 km and added distinct procedural regions: downtown/suburbs, airport runway and terminal, industrial docks and container yard, coral beach and islands, Emerald Lake with an island, pine forest, northern mountain range, desert dunes and rural outskirts.
