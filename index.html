@@ -47,9 +47,35 @@ const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"h
 const hemi=new THREE.HemisphereLight(0xd6eaff,0x4a5844,1.35);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffedcf,2.0);sun.position.set(-120,180,80);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-100;sun.shadow.camera.right=100;sun.shadow.camera.top=100;sun.shadow.camera.bottom=-100;scene.add(sun);
 const mat=(c,r=.86,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
-const mats={grass:mat(0x617c4e),road:mat(0x353b40,.94),side:mat(0xaaa99d),line:mat(0xd8d0ad),water:mat(0x347d91,.24,.25),trunk:mat(0x634a35),leaf:mat(0x315d3c),glass:mat(0x6e9da8,.28,.35),tire:mat(0x171b1d),white:mat(0xd8d6ca),yellow:mat(0xe9bc52)};
-function mesh(geo,material,x,y,z,parent=scene){const o=new THREE.Mesh(geo,material);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
-const ground=mesh(new THREE.PlaneGeometry(3000,3000),mats.grass,0,-.18,0);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
+// Phase 3: small, tileable surface maps generated at runtime — no downloaded art assets.
+function surfaceTexture(kind,seed){
+ const c=document.createElement("canvas");c.width=256;c.height=256;
+ const ctx=c.getContext("2d"),img=ctx.createImageData(256,256),data=img.data;
+ let state=seed>>>0;const random=()=>{state=(state*1664525+1013904223)>>>0;return state/4294967296};
+ const base=kind==="grass"?[83,111,62]:kind==="asphalt"?[49,55,59]:[157,155,145];
+ for(let i=0;i<256*256;i++){const n=(random()-.5)*(kind==="grass"?38:kind==="asphalt"?32:25);const p=i*4;data[p]=Math.max(0,Math.min(255,base[0]+n));data[p+1]=Math.max(0,Math.min(255,base[1]+n));data[p+2]=Math.max(0,Math.min(255,base[2]+n));data[p+3]=255}
+ ctx.putImageData(img,0,0);
+ // Fine, low-contrast organic detail gives the surface readable scale without heavy geometry.
+ if(kind==="grass"){for(let i=0;i<1500;i++){const x=random()*256,y=random()*256;ctx.strokeStyle=random()>.5?"rgba(160,178,105,.20)":"rgba(35,66,36,.22)";ctx.lineWidth=.5+random();ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(random()-.5)*2,y-1-random()*4);ctx.stroke()}}
+ if(kind==="asphalt"){for(let i=0;i<90;i++){const x=random()*256,y=random()*256;ctx.fillStyle=random()>.5?"rgba(8,12,15,.24)":"rgba(180,184,178,.13)";ctx.fillRect(x,y,1+random()*2,1+random()*2)}}
+ const tex=new THREE.CanvasTexture(c);tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());return tex;
+}
+const grassTexture=surfaceTexture("grass",1701),asphaltTexture=surfaceTexture("asphalt",2903),concreteTexture=surfaceTexture("concrete",4817);
+const mats={grass:mat(0xffffff,.98),road:mat(0xffffff,.96),side:mat(0xffffff,.92),line:mat(0xd8d0ad),water:mat(0x347d91,.24,.25),trunk:mat(0x634a35),leaf:mat(0x315d3c),glass:mat(0x6e9da8,.28,.35),tire:mat(0x171b1d),white:mat(0xd8d6ca),yellow:mat(0xe9bc52)};
+mats.grass.map=grassTexture;mats.grass.bumpMap=grassTexture;mats.grass.bumpScale=.12;
+mats.road.map=asphaltTexture;mats.road.bumpMap=asphaltTexture;mats.road.bumpScale=.035;
+mats.side.map=concreteTexture;mats.side.bumpMap=concreteTexture;mats.side.bumpScale=.025;
+mats.grass.needsUpdate=mats.road.needsUpdate=mats.side.needsUpdate=true;
+function mesh(geo,material,x,y,z,parent=scene){
+ if((material===mats.road||material===mats.side)&&geo.type==="BoxGeometry"&&geo.attributes.uv){
+  const uv=geo.attributes.uv,w=geo.parameters.width||1,d=geo.parameters.depth||1;
+  for(let i=0;i<uv.count;i++){uv.setX(i,uv.getX(i)*Math.max(1,w/8));uv.setY(i,uv.getY(i)*Math.max(1,d/8))}uv.needsUpdate=true;
+ }
+ const o=new THREE.Mesh(geo,material);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o
+}
+const groundGeometry=new THREE.PlaneGeometry(3000,3000),groundUV=groundGeometry.attributes.uv;
+for(let i=0;i<groundUV.count;i++){groundUV.setX(i,groundUV.getX(i)*150);groundUV.setY(i,groundUV.getY(i)*150)}groundUV.needsUpdate=true;
+const ground=mesh(groundGeometry,mats.grass,0,-.18,0);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
 const city={size:2800,roadGap:100,roads:[],buildings:[],obstacles:[],traffic:[],peds:[],lamps:[],stations:[],shops:[],landmarks:[],regions:[]};
 const roadMatWet=mat(0x252f35,.35,.25);
 function road(x,z,w,d){mesh(new THREE.BoxGeometry(w,.12,d),mats.road,x,0,z);if(w>d){if(w>1000)mesh(new THREE.BoxGeometry(w,.025,.18),mats.line,x,.075,z);else for(let xx=x-w/2+4;xx<x+w/2-2;xx+=12)mesh(new THREE.BoxGeometry(5,.025,.18),mats.line,xx,.075,z)}else{if(d>1000)mesh(new THREE.BoxGeometry(.18,.025,d),mats.line,x,.075,z);else for(let zz=z-d/2+4;zz<z+d/2-2;zz+=12)mesh(new THREE.BoxGeometry(.18,.025,5),mats.line,x,.075,zz)}if(w>d){mesh(new THREE.BoxGeometry(w,.16,2.2),mats.side,x,.02,z-w/2-1.8);mesh(new THREE.BoxGeometry(w,.16,2.2),mats.side,x,.02,z+w/2+1.8)}else{mesh(new THREE.BoxGeometry(2.2,.16,d),mats.side,x-w/2-1.8,.02,z);mesh(new THREE.BoxGeometry(2.2,.16,d),mats.side,x+w/2+1.8,.02,z)}city.roads.push({x,z,w,d})}
