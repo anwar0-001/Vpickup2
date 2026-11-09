@@ -23,7 +23,7 @@ Vpickup2 is an independent 3D driving and life-simulation game for Android, made
 
 ## Controls
 - Android: use the on-screen left/right, accelerate and brake buttons. Drive near the dealership, food market or one of the six sale houses, then tap Interact.
-- Desktop: WASD or arrow keys to drive; E to interact.
+- Desktop: WASD or arrow keys to drive/walk; E to interact; F to exit or re-enter the parked vehicle; M to open the map.
 - Tap Delivery +$350 to accept a delivery job; collect the parcel at the yellow village marker and deliver it to the blue city marker.
 - Toggle Infinite to switch between normal spending and unlimited money.
 
@@ -73,6 +73,6 @@ The repository root now also contains a standalone browser edition in `index.htm
 4. On desktop, use WASD or arrow keys to drive, E to interact and M to open the map.
 
 ### Current development status and limitations
-This is a playable procedural open-world prototype, not a finished AAA-scale simulation. Traffic and pedestrians use lightweight waypoint-like movement rather than full city navigation; vehicle handling is arcade/simplified rather than a full tire-and-suspension physics solver; rain uses a procedural particle field and wet-looking road material rather than expensive planar reflections. Interior camera, full cargo rigid-body simulation, advanced damage meshes/smoke, detailed pedestrian animation, radio music composition, and comprehensive device testing remain future work. Low/Medium/High settings adjust render resolution, shadows, rain and distance culling; performance depends on the phone/browser/GPU.
+This is a playable procedural open-world prototype, not a finished AAA-scale simulation. Traffic and pedestrians use lightweight waypoint-like movement rather than full city navigation; vehicle handling is arcade/simplified rather than a full tire-and-suspension physics solver; rain uses a procedural particle field and wet-looking road material rather than expensive planar reflections. A fully modelled vehicle interior, full cargo rigid-body simulation, advanced damage meshes, deeper pedestrian AI and richer character animation, radio music composition, and comprehensive device testing remain future work. Low/Medium/High settings adjust render resolution, shadows, rain and distance culling; performance depends on the phone/browser/GPU.
 
 The browser save is stored locally in the current browser profile and is not synchronized with the Godot save or other devices. The original Godot project and its existing workflows remain unchanged.
