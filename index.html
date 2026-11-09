@@ -189,14 +189,60 @@ const homes=[
 {id:"coast",name:"منزل الساحل",x:555,z:590,price:1850,color:0xd6b98d}
 ];
 const homeRoot=new THREE.Group();scene.add(homeRoot);
-for(const h of homes){
- const g=new THREE.Group(),wall=mat(h.color),roof=mat(0x454e4d),trim=mat(0xe6dfc9),doorMat=mat(0x684c38);
- mesh(new THREE.BoxGeometry(14,6,12),wall,0,3,0,g);
- mesh(new THREE.BoxGeometry(15,.55,13),roof,0,6.1,0,g);
- mesh(new THREE.BoxGeometry(2.2,3.8,.18),doorMat,0,1.9,6.08,g);
- for(const x of [-4.2,4.2]){mesh(new THREE.BoxGeometry(2.2,2,.16),mat(0x83aeb4,.28,.25),x,3.3,6.1,g);mesh(new THREE.BoxGeometry(2.45,.16,.24),trim,x,3.3,6.2,g)}
- mesh(new THREE.BoxGeometry(5,.22,3),mat(0x8c9188),0,.12,7.4,g);
- const sign=mesh(new THREE.BoxGeometry(5,.8,.18),mat(0x254b42),0,5.2,6.22,g);
+const houseTrim=mat(0xe9e1cf),houseGlass=mat(0x79aeba,.24,.28),houseFrame=mat(0xeee4cf),houseWood=mat(0x684b36),houseStone=mat(0x777b73),houseMetal=mat(0x3d4545);
+const roofPalette=[0x914f3e,0x536d70,0x8a754e];
+const gableShape=new THREE.Shape();gableShape.moveTo(-7,0);gableShape.lineTo(7,0);gableShape.lineTo(0,3.7);gableShape.closePath();
+const gableGeometry=new THREE.ShapeGeometry(gableShape);
+function addSideWindow(g,x,z){
+ const pane=mesh(new THREE.BoxGeometry(.12,1.8,2.1),houseGlass,x,3.25,z,g);
+ for(const y of [2.28,4.22])mesh(new THREE.BoxGeometry(.2,.13,2.35),houseFrame,x,y,z,g);
+ for(const zz of [z-1.17,z+1.17])mesh(new THREE.BoxGeometry(.2,2.05,.13),houseFrame,x,3.25,zz,g);
+ mesh(new THREE.BoxGeometry(.24,.12,2.4),houseWood,x,2.25,z,g);
+ mesh(new THREE.BoxGeometry(.18,1.65,.12),houseFrame,x,3.25,z,g);
+}
+for(let hi=0;hi<homes.length;hi++){
+ const h=homes[hi],g=new THREE.Group(),wall=mat(h.color),roof=mat(roofPalette[hi],.88),doorMat=mat(0x684c38);
+ // Stone foundation and a softly contrasting facade band.
+ mesh(new THREE.BoxGeometry(14.5,.55,12.5),houseStone,0,.28,0,g);
+ mesh(new THREE.BoxGeometry(14,6,12),wall,0,3.25,0,g);
+ mesh(new THREE.BoxGeometry(14.25,.18,12.25),houseTrim,0,5.95,0,g);
+ // Gable ends and two sloped roof planes form a recognizable pitched roof.
+ const frontGable=mesh(gableGeometry,wall,0,6.05,6.035,g);
+ const backGable=mesh(gableGeometry,wall,0,6.05,-6.035,g);backGable.rotation.y=Math.PI;
+ const leftRoof=mesh(new THREE.BoxGeometry(8.5,.42,13.2),roof,-3.35,7.92,0,g);leftRoof.rotation.z=.49;
+ const rightRoof=mesh(new THREE.BoxGeometry(8.5,.42,13.2),roof,3.35,7.92,0,g);rightRoof.rotation.z=-.49;
+ mesh(new THREE.BoxGeometry(.5,.55,13.35),houseWood,0,9.62,0,g);
+ // Front door, frame, handle, porch canopy and two support posts.
+ mesh(new THREE.BoxGeometry(2.35,4.05,.2),houseFrame,0,2.05,6.12,g);
+ mesh(new THREE.BoxGeometry(2.05,3.78,.16),doorMat,0,1.92,6.24,g);
+ mesh(new THREE.SphereGeometry(.09,8,6),mat(0xd8b56d,.35,.55),.72,1.95,6.34,g);
+ mesh(new THREE.BoxGeometry(3.3,.28,2.1),roof,0,4.55,7.05,g);
+ for(const x of [-1.42,1.42])mesh(new THREE.BoxGeometry(.18,2.55,.18),houseFrame,x,1.35,7.78,g);
+ // Two front windows with layered frames, crossbars and shutters.
+ for(const x of [-4.25,4.25]){
+  mesh(new THREE.BoxGeometry(2.5,2.25,.22),houseFrame,x,3.35,6.13,g);
+  mesh(new THREE.BoxGeometry(2.18,1.92,.12),houseGlass,x,3.35,6.27,g);
+  mesh(new THREE.BoxGeometry(2.3,.13,.16),houseFrame,x,3.35,6.36,g);
+  mesh(new THREE.BoxGeometry(.13,2.05,.16),houseFrame,x,3.35,6.36,g);
+  for(const side of [-1,1])mesh(new THREE.BoxGeometry(.28,2.05,.2),houseWood,x+side*1.34,3.35,6.16,g);
+  mesh(new THREE.BoxGeometry(2.65,.16,.28),houseFrame,x,2.2,6.25,g);
+ }
+ // Side windows, chimney and exterior lamps add depth from more than one angle.
+ addSideWindow(g,7.08,-3.1);addSideWindow(g,-7.08,3.1);
+ mesh(new THREE.BoxGeometry(1.1,2.2,1.1),houseStone,4.2,8.2,-3.8,g);
+ mesh(new THREE.BoxGeometry(1.3,.25,1.3),houseWood,4.2,9.35,-3.8,g);
+ for(const x of [-2.1,2.1]){
+  mesh(new THREE.BoxGeometry(.32,.55,.2),houseWood,x,5.1,6.2,g);
+  const lamp=mesh(new THREE.SphereGeometry(.13,7,6),mat(0xffd99a,.35),x,5.08,6.34,g);
+ }
+ // Front step and two compact planters.
+ mesh(new THREE.BoxGeometry(4.2,.22,1.5),houseStone,0,.12,7.8,g);
+ for(const x of [-5.9,5.9]){
+  mesh(new THREE.BoxGeometry(1.5,.5,1.1),houseStone,x,.25,7.2,g);
+  mesh(new THREE.SphereGeometry(.62,7,6),mat(0x547c4b),x,.82,7.2,g);
+ }
+ // A small house plaque keeps the three purchasable properties distinguishable.
+ mesh(new THREE.BoxGeometry(3.8,.65,.18),mat(0x254b42),0,5.05,6.32,g);
  g.position.set(h.x,0,h.z);homeRoot.add(g);h.group=g;h.doorX=h.x;h.doorZ=h.z+8.7;
  city.buildings.push({group:g,x:h.x,z:h.z,w:14,d:12});
 }
