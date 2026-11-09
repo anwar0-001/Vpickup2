@@ -139,12 +139,12 @@ regionRoad(-720,0,13,1450);regionRoad(720,0,13,1450);
  flatPatch(g,0,0,760,330,0xd9c28e);
  const sea=regionMesh(g,new THREE.PlaneGeometry(240,520),mats.water,420,-.08,0);sea.rotation.x=-Math.PI/2;
  for(const [x,z,r] of [[300,-150,32],[380,120,24],[475,-20,18]]){const island=regionMesh(g,new THREE.ConeGeometry(r,24,8),mat(0x617a4e),x,10,z);island.rotation.x=.08}
- regionRoad(0,0,600,12);
+ regionRoad(820,390,600,12);
  city.landmarks.push({name:"شاطئ المرجان",x:820,z:390});
 }
 // Additional road connectors and bridge decks to make the distant areas reachable.
-regionRoad(720,-900,18,520);regionRoad(930,-900,520,18);
-regionRoad(720,900,18,520);regionRoad(930,900,520,18);
+regionRoad(720,-700,18,520);regionRoad(930,-700,520,18);
+regionRoad(720,900,18,520);regionRoad(930,900,520,18);regionRoad(930,320,620,12);
 regionRoad(-900,390,18,620);regionRoad(-900,1050,620,18);
 
 // Street lights, traffic signals and street props
