@@ -55,11 +55,15 @@ The repository root now also contains a standalone browser edition in `index.htm
 
 ### Browser edition features
 - Procedurally generated 3D city with a downtown district, suburban blocks, industrial area, highway corridor, bridge, waterfront and rural hills.
+- Phase 1 expanded the playable world bounds to roughly 2.8 km × 2.8 km and added distinct procedural regions: downtown/suburbs, airport runway and terminal, industrial docks and container yard, coral beach and islands, Emerald Lake with an island, pine forest, northern mountain range, desert dunes and rural outskirts.
+- New outer highways and a continuous coastal crossing connect remote regions; region groups stream by distance and the full map now labels districts while the minimap tracks the active player locally.
 - Generated geometry and canvas-made landmark signs; no downloaded models, image textures, logos, characters or audio files.
 - Grid road network, lane markings, sidewalks, traffic signals, ambient traffic and simple pedestrian movement.
 - Day/night lighting cycle and dynamic clear, fog and rain weather; rain changes road material response.
 - Four selectable vehicle profiles (pickup, van, sports car and truck), steering, acceleration, braking, handbrake, collision damage, fuel and service stations.
+- Phase 1 driving update: speed-sensitive steering, acceleration and braking response, road/off-road grip, wet-road traction loss, aerodynamic and rolling drag, handbrake slip, tire wear saved locally, repairable tire condition, wheel steering/rotation and improved obstacle/building collision response.
 - Delivery contracts with pickup and drop-off stages, fragile/heavy/urgent and long-distance jobs, time limits, traffic fines, rewards, repair and fuel services.
+- Phase 1 delivery contracts now dispatch pickups across the airport, port, forest, mountains, desert, beach, lake and residential districts, with distance-scaled rewards and deadlines before returning cargo to the central delivery hub.
 - Garage upgrades for engine, grip, fuel tank and cargo; local browser save and migration of the earlier web game's coin balance when available.
 - Chase, hood and cinematic camera modes, mobile touch controls, keyboard controls, minimap/full map with a route line, Low/Medium/High quality presets and optional FPS counter.
 - On-foot third-person character mode: safely exit only after stopping, walk and turn with the same touch/keyboard controls, re-enter near the parked vehicle, and use nearby fuel, repair and garage services while on foot.
@@ -74,6 +78,6 @@ The repository root now also contains a standalone browser edition in `index.htm
 4. On desktop, use WASD or arrow keys to drive, E to interact and M to open the map.
 
 ### Current development status and limitations
-This is a playable procedural open-world prototype, not a finished AAA-scale simulation. Traffic and pedestrians use lightweight waypoint-like movement rather than full city navigation; vehicle handling is arcade/simplified rather than a full tire-and-suspension physics solver; rain uses a procedural particle field and wet-looking road material rather than expensive planar reflections. A fully modelled vehicle interior, full cargo rigid-body simulation, advanced damage meshes, deeper pedestrian AI and richer character animation, radio music composition, and comprehensive device testing remain future work. Low/Medium/High settings adjust render resolution, shadows, rain and distance culling; performance depends on the phone/browser/GPU.
+Phase 1 is a playable procedural open-world foundation, not a finished AAA-scale simulation. The map and delivery loop are expanded, but enterable interiors, underwater exploration, aircraft/boats, story chapters, property systems and the wider life-simulation features are intentionally reserved for later approved phases. Traffic and pedestrians use lightweight waypoint-like movement rather than full city navigation; vehicle handling is arcade/simplified rather than a full tire-and-suspension physics solver; rain uses a procedural particle field and wet-looking road material rather than expensive planar reflections. A fully modelled vehicle interior, full cargo rigid-body simulation, advanced damage meshes, deeper pedestrian AI and richer character animation, radio music composition, and comprehensive device testing remain future work. Low/Medium/High settings adjust render resolution, shadows, rain and distance culling; performance depends on the phone/browser/GPU.
 
 The browser save is stored locally in the current browser profile and is not synchronized with the Godot save or other devices. The original Godot project and its existing workflows remain unchanged.
