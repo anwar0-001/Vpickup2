@@ -504,8 +504,8 @@ function applyCharacterLook(){
  const p=characterProfiles[activeCharacter],skin=mat(p.skin),shirt=mat(p.shirt),pants=mat(p.pants),shoe=mat(p.shoe);
  if(walker.children[0])walker.children[0].material=skin;
  if(walker.children[1])walker.children[1].material=shirt;
- for(const i of [2,3])if(walker.children[i]){if(walker.children[i].children[0])walker.children[i].children[0].material=shirt;if(walker.children[i].children[1])walker.children[i].children[1].material=skin}
- for(const i of [4,5])if(walker.children[i]){if(walker.children[i].children[0])walker.children[i].children[0].material=pants;if(walker.children[i].children[1])walker.children[i].children[1].material=shoe}
+ for(const i of [2,4])if(walker.children[i]){if(walker.children[i].children[0])walker.children[i].children[0].material=shirt;if(walker.children[i].children[1])walker.children[i].children[1].material=skin}
+ for(const i of [3,5])if(walker.children[i]){if(walker.children[i].children[0])walker.children[i].children[0].material=pants;if(walker.children[i].children[1])walker.children[i].children[1].material=shoe}
  if(characterAccessory){walker.remove(characterAccessory);characterAccessory=null}
  characterAccessory=new THREE.Group();
  if(activeCharacter===0){mesh(new THREE.SphereGeometry(.19,8,6),mat(0x1d3430),0,1.96,-.02,characterAccessory);mesh(new THREE.BoxGeometry(.48,.12,.12),mat(0xe6c46c),0,1.79,-.02,characterAccessory)}
