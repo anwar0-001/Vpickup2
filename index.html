@@ -740,16 +740,17 @@ const radioAds=[
 function radioTone(freq,duration,wave="triangle",gainValue=.009){
  if(!audio||muted)return;const o=audio.createOscillator(),g=audio.createGain();o.type=wave;o.frequency.setValueAtTime(freq,audio.currentTime);g.gain.setValueAtTime(.0001,audio.currentTime);g.gain.linearRampToValueAtTime(gainValue,audio.currentTime+.025);g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+duration);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration+.02)
 }
+function speakRadio(text){if(muted||typeof SpeechSynthesisUtterance==="undefined"||!window.speechSynthesis)return;try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ar-MA";u.rate=1.02;u.pitch=1;window.speechSynthesis.speak(u)}catch{}}
 function startRadio(){
  audioInit();if(!audio||radioTimer)return;
  radioTimer=setInterval(()=>{if(!radioOn||muted||!audio)return;const station=radioStations[radioStation],weatherBoost=weather==="rain"?.92:1,speedBoost=clamp(1+Math.abs(vehicle.speed||0)*.004,.95,1.18),freq=station.notes[radioStep++%station.notes.length]*weatherBoost;radioTone(freq,station.tempo/1000,station.wave,.008*speedBoost)},260);
- radioProgramTimer=setInterval(()=>{if(!radioOn||muted)return;const text=radioProgramClock++%4===3?choose(radioAds):choose(radioTalk);toast("📻 "+text);beep(680,.08)},17000);
+ radioProgramTimer=setInterval(()=>{if(!radioOn||muted)return;const text=radioProgramClock++%4===3?choose(radioAds):choose(radioTalk);toast("📻 "+text);speakRadio(text);beep(680,.08)},17000);
  $("radio").textContent="♫ "+radioStations[radioStation].name;
 }
 $("radio").onclick=()=>{
  if(!radioOn){radioOn=true;startRadio();beep(520);toast("بدأ البث: "+radioStations[radioStation].name)}
  else{radioStation=(radioStation+1)%radioStations.length;radioStep=0;$("radio").textContent="♫ "+radioStations[radioStation].name;toast("تم تغيير المحطة: "+radioStations[radioStation].name);beep(620)}
-};$("radio").ondblclick=()=>{radioOn=false;clearInterval(radioTimer);clearInterval(radioProgramTimer);radioTimer=null;radioProgramTimer=null;$("radio").textContent="♫ راديو";toast("تم إيقاف البث")};
+};$("radio").ondblclick=()=>{radioOn=false;clearInterval(radioTimer);clearInterval(radioProgramTimer);radioTimer=null;radioProgramTimer=null;if(window.speechSynthesis)window.speechSynthesis.cancel();$("radio").textContent="♫ راديو";toast("تم إيقاف البث")};
 function bindHold(id,key){let el=$(id);el.addEventListener("pointerdown",e=>{e.preventDefault();controls[key]=true;el.setPointerCapture(e.pointerId)});["pointerup","pointercancel","lostpointercapture"].forEach(ev=>el.addEventListener(ev,()=>controls[key]=false))}
 // Optional device-tilt steering; permission is requested only after the player taps its button.
 let tiltSteering=false,tiltValue=0,tiltSupported=false;
